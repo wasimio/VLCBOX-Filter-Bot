@@ -401,11 +401,22 @@ async def start(client, message):
             return await message.reply_text(text="<b>ɪɴᴠᴀʟɪᴅ ʟɪɴᴋ ᴏʀ ᴇxᴘɪʀᴇᴅ ʟɪɴᴋ</b>", protect_content=True)
             
     if data.startswith("sendfiles"):
-        chat_id = int("-" + file_id.split("-")[1])
-        userid = message.from_user.id if message.from_user else None
+        # Format: sendfiles1_{chat_id_str}_{key} or sendfiles_{chat_id}_{key}
+        parts = file_id.split("_", 1)
+        if len(parts) == 2 and parts[0].startswith("00") and parts[0][2:].isdigit():
+            raw_chat_id = parts[0]
+            key = parts[1]
+            chat_id = int("-" + raw_chat_id[2:])
+        elif "-" in file_id:
+            chat_id = int("-" + file_id.split("-")[1])
+            key = file_id
+        else:
+            return await message.reply("<b>❌ Session expired or invalid link. Please search again.</b>")
+            
+        temp.SHORT[message.from_user.id] = chat_id
         settings = await get_settings(chat_id)
         pre = 'allfilesp' if settings['file_secure'] else 'allfiles'
-        g = await get_shortlink(chat_id, f"https://telegram.me/{temp.U_NAME}?start={pre}_{file_id}")
+        g = await get_shortlink(chat_id, f"https://telegram.me/{temp.U_NAME}?start={pre}_{chat_id_str if 'chat_id_str' in locals() else raw_chat_id if 'raw_chat_id' in locals() else str(chat_id).replace('-','00')}_{key}")
         btn = [[
             InlineKeyboardButton('ᴅᴏᴡɴʟᴏᴀᴅ ɴᴏᴡ', url=g)
         ]]
@@ -473,10 +484,13 @@ async def start(client, message):
                     f_caption=f_caption
             if f_caption is None:
                 f_caption = f"@vlcbox {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1['file_name'].split()))}"
-            if not await db.has_premium_access(message.from_user.id):
-                if not await check_verification(client, message.from_user.id) and VERIFY == True:
+            if not is_premium:
+                came_from_shortlink = pre in ('file', 'filep', 'allfiles', 'allfilesp')
+                if came_from_shortlink:
+                    VERIFIED[user_id] = str(datetime.date.today())
+                elif not await check_verification(client, user_id) and VERIFY == True:
                     btn = [[
-                        InlineKeyboardButton("ᴠᴇʀɪғʏ", url=await get_token(client, message.from_user.id, f"https://telegram.me/{temp.U_NAME}?start="))
+                        InlineKeyboardButton("ᴠᴇʀɪғʏ", url=await get_token(client, user_id, f"https://telegram.me/{temp.U_NAME}?start="))
                     ],[
                         InlineKeyboardButton("ʜᴏᴡ ᴛᴏ ᴠᴇʀɪғʏ", url=VERIFY_TUTORIAL)
                     ]]
@@ -511,9 +525,19 @@ async def start(client, message):
         
     elif data.startswith("files"):
         user = message.from_user.id
-        chat_id = temp.SHORT.get(user)
-        if not chat_id:
-            return await message.reply_text(text="<b>❌ Session expired. Please search again in the group and click the file button again.</b>")
+        parts = file_id.split("_", 1)
+        if len(parts) == 2 and parts[0].startswith("00") and parts[0][2:].isdigit():
+            # New format: extract embedded chat_id
+            raw_chat_id = parts[0]
+            file_id = parts[1]
+            chat_id = int("-" + raw_chat_id[2:]) 
+        else:
+            # Old format: fall back to temp.SHORT
+            chat_id = temp.SHORT.get(user)
+            if not chat_id:
+                return await message.reply_text(text="<b>❌ Session expired. Please search again in the group and click the file button again.</b>")
+
+        temp.SHORT[user] = chat_id # Ensure it's stored for next steps
         settings = await get_settings(chat_id)
         pre = 'filep' if settings['file_secure'] else 'file'
         if settings['is_shortlink'] and not await db.has_premium_access(user):

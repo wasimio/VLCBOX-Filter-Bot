@@ -1392,26 +1392,25 @@ async def cb_handler(client: Client, query: CallbackQuery):
     elif query.data.startswith("sendfiles"):
         clicked = query.from_user.id
         ident, key = query.data.split("#")
-        settings = await get_settings(query.message.chat.id)
+        chat_id = query.message.chat.id
+        chat_id_str = str(chat_id).replace("-", "00")
+        settings = await get_settings(chat_id)
         pre = 'allfilesp' if settings['file_secure'] else 'allfiles'
         try:
             if settings['is_shortlink'] and not await db.has_premium_access(query.from_user.id):
-                await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles1_{key}")
+                await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles1_{chat_id_str}_{key}")
             elif settings['is_shortlink'] and await db.has_premium_access(query.from_user.id):
                 await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start={pre}_{key}")
                 return 
             else:
                 await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start={pre}_{key}")
-                
-            
-                
         except UserIsBlocked:
             await query.answer('Uɴʙʟᴏᴄᴋ ᴛʜᴇ ʙᴏᴛ ᴍᴀʜɴ !', show_alert=True)
         except PeerIdInvalid:
-            await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles3_{key}")
+            await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles3_{chat_id_str}_{key}")
         except Exception as e:
             logger.exception(e)
-            await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles4_{key}")
+            await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles4_{chat_id_str}_{key}")
 
     elif query.data.startswith("unmuteme"):
         ident, userid = query.data.split("#")
@@ -2656,6 +2655,7 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
     time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
     remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
     TEMPLATE = script.IMDB_TEMPLATE_TXT
+    chat_id_str = str(message.chat.id).replace("-", "00")
     if imdb:
         cap = TEMPLATE.format(
             qurey=search,
@@ -2692,7 +2692,7 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
         if not settings["button"]:
             cap+="<b>\n\n<u>🍿 Your Movie Files 👇</u></b>\n"
             for file in files:
-                cap += f"<b>\n📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{file['file_id']}'>[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}\n</a></b>"
+                cap += f"<b>\n📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{chat_id_str}_{file['file_id']}'>[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}\n</a></b>"
     else:
         if settings["button"]:
             cap = f"<b>Tʜᴇ Rᴇꜱᴜʟᴛꜱ Fᴏʀ ☞ {search}\n\nRᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention}\n\nʀᴇsᴜʟᴛ sʜᴏᴡ ɪɴ ☞ {remaining_seconds} sᴇᴄᴏɴᴅs\n\nᴘᴏᴡᴇʀᴇᴅ ʙʏ ☞ : {message.chat.title} \n\n⚠️ ᴀꜰᴛᴇʀ 5 ᴍɪɴᴜᴛᴇꜱ ᴛʜɪꜱ ᴍᴇꜱꜱᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇʟᴇᴛᴇᴅ 🗑️\n\n</b>"
@@ -2700,7 +2700,7 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
             cap = f"<b>Tʜᴇ Rᴇꜱᴜʟᴛꜱ Fᴏʀ ☞ {search}\n\nRᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention}\n\nʀᴇsᴜʟᴛ sʜᴏᴡ ɪɴ ☞ {remaining_seconds} sᴇᴄᴏɴᴅs\n\nᴘᴏᴡᴇʀᴇᴅ ʙʏ ☞ : {message.chat.title} \n\n⚠️ ᴀꜰᴛᴇʀ 5 ᴍɪɴᴜᴛᴇꜱ ᴛʜɪꜱ ᴍᴇꜱꜱᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇʟᴇᴛᴇᴅ 🗑️\n\n</b>"
             cap+="<b><u>🍿 Your Movie Files 👇</u></b>\n\n"
             for file in files:
-                cap += f"<b>📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{file['file_id']}'>[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}\n\n</a></b>"
+                cap += f"<b>📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{chat_id_str}_{file['file_id']}'>[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}\n\n</a></b>"
 
     if imdb and imdb.get('poster'):
         try:
