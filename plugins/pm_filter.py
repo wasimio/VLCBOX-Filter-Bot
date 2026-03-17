@@ -1363,7 +1363,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
             if settings['is_shortlink'] and not await db.has_premium_access(query.from_user.id):
                 if clicked == typed:
                     temp.SHORT[clicked] = query.message.chat.id
-                    await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=short_{file_id}")
+                    # Encode chat_id into URL so it survives bot restarts (temp.SHORT is in-memory)
+                    chat_id_str = str(query.message.chat.id).replace("-", "00")
+                    await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=short_{chat_id_str}_{file_id}")
                     return
                 else:
                     await query.answer(f"Hᴇʏ {query.from_user.first_name}, Tʜɪs Is Nᴏᴛ Yᴏᴜʀ Mᴏᴠɪᴇ Rᴇǫᴜᴇsᴛ. Rᴇǫᴜᴇsᴛ Yᴏᴜʀ's !", show_alert=True)

@@ -422,7 +422,23 @@ async def start(client, message):
     
     elif data.startswith("short"):
         user = message.from_user.id
-        chat_id = temp.SHORT.get(user)
+        # New format: short_{chat_id}_{file_id} where chat_id has '-' replaced by '00'
+        # Old format (fallback): short_{file_id}
+        parts = file_id.split("_", 1)
+        if len(parts) == 2 and parts[0].startswith("00") and parts[0][2:].isdigit():
+            # New format: extract embedded chat_id
+            raw_chat_id = parts[0]
+            file_id = parts[1]
+            chat_id = int("-" + raw_chat_id[2:])  # restore the '-' prefix for groups
+        else:
+            # Old format: fall back to temp.SHORT
+            chat_id = temp.SHORT.get(user)
+            if not chat_id:
+                return await message.reply_text("<b>❌ Session expired. Please search again in the group and click the file button again.</b>")
+
+        # Re-store in temp.SHORT for any further lookups
+        temp.SHORT[user] = chat_id
+
         settings = await get_settings(chat_id)
         pre = 'filep' if settings['file_secure'] else 'file'
         g = await get_shortlink(chat_id, f"https://telegram.me/{temp.U_NAME}?start={pre}_{file_id}")
@@ -495,10 +511,9 @@ async def start(client, message):
         
     elif data.startswith("files"):
         user = message.from_user.id
-        if temp.SHORT.get(user)==None:
-            await message.reply_text(text="<b>Please Search Again in Group</b>")
-        else:
-            chat_id = temp.SHORT.get(user)
+        chat_id = temp.SHORT.get(user)
+        if not chat_id:
+            return await message.reply_text(text="<b>❌ Session expired. Please search again in the group and click the file button again.</b>")
         settings = await get_settings(chat_id)
         pre = 'filep' if settings['file_secure'] else 'file'
         if settings['is_shortlink'] and not await db.has_premium_access(user):
