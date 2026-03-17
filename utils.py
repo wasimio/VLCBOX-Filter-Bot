@@ -65,35 +65,29 @@ async def pub_is_subscribed(bot, query, channel):
 async def is_subscribed(bot, query):
     if not AUTH_CHANNEL:
         return True
+    user_id = query.from_user.id if query.from_user else query.message.chat.id
+    
+    # Check if user is in Join Requests database (for ALL channels)
+    if REQUEST_TO_JOIN_MODE and join_db().isActive():
+        try:
+            user = await join_db().get_user(user_id)
+            if user:
+                return True # User confirmed in Join Requests DB
+        except Exception as e:
+            logger.error(f"Error checking join_db: {e}")
+
+    # Fallback to direct member check for each channel
     for channel_id in AUTH_CHANNEL:
-        if REQUEST_TO_JOIN_MODE == True and join_db().isActive():
-            try:
-                user = await join_db().get_user(query.from_user.id)
-                if user and user["user_id"] == query.from_user.id:
-                    continue
-                else:
-                    try:
-                        user_data = await bot.get_chat_member(channel_id, query.from_user.id)
-                    except UserNotParticipant:
-                        return False
-                    except Exception as e:
-                        logger.exception(e)
-                    else:
-                        if user_data.status == enums.ChatMemberStatus.BANNED:
-                            return False
-            except Exception as e:
-                logger.exception(e)
+        try:
+            user_msg = await bot.get_chat_member(channel_id, user_id)
+            if user_msg.status == enums.ChatMemberStatus.BANNED:
                 return False
-        else:
-            try:
-                user = await bot.get_chat_member(channel_id, query.from_user.id)
-            except UserNotParticipant:
-                return False
-            except Exception as e:
-                logger.exception(e)
-            else:
-                if user.status == enums.ChatMemberStatus.BANNED:
-                    return False
+        except UserNotParticipant:
+            return False
+        except Exception as e:
+            logger.error(f"Error checking subscription for {channel_id}: {e}")
+            continue # If bot is not admin or other error, assume subscribed to this channel
+
     return True
 
 async def get_poster(query, bulk=False, id=False, file=None):

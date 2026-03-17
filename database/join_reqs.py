@@ -6,10 +6,13 @@ import motor.motor_asyncio
 from info import AUTH_CHANNEL, OTHER_DB_URI
 
 class JoinReqs:
+    _client = None
 
     def __init__(self):
         if OTHER_DB_URI:
-            self.client = motor.motor_asyncio.AsyncIOMotorClient(OTHER_DB_URI)
+            if JoinReqs._client is None:
+                JoinReqs._client = motor.motor_asyncio.AsyncIOMotorClient(OTHER_DB_URI)
+            self.client = JoinReqs._client
             self.db = self.client["JoinReqs"]
             self.col = self.db[str(AUTH_CHANNEL[0] if isinstance(AUTH_CHANNEL, list) and AUTH_CHANNEL else AUTH_CHANNEL)]
         else:
