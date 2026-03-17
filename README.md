@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.ibb.co/dJ0gpJf1/photo-2025-06-16-12-07-05-7516517596376596504.jpg" alt="VLCBOX-Filter-Bot Logo">
+  <img src="https://i.ibb.co/7xh7J55P/photo-2026-03-17-22-32-23.jpg" alt="VLCBOX-Filter-Bot Logo">
 </p>
 <h1>
   VLCBOX FILTER BOT

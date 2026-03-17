@@ -495,7 +495,7 @@ Aᴠᴀɪʟᴀʙʟᴇ ᴄᴏᴍᴍᴀɴᴅs:
 
  படி 2: உங்கள் இணையதளம் மற்றும் API ஐச் சேர்க்கவும்
 
- Exp: /shortlink xtz.in 4b392f8eb6ad711fbe58
+ Exp: /shortlink mdiskshort.in ce99efd97d05ce5f3698112d843b01a1f6e735d6
 
  வீடியோவைச் சேர்க்கவும்
 
@@ -522,7 +522,7 @@ Hey <a href='tg://settings'>ᴍʏ ғʀɪᴇɴᴅ</a>
 
  Step 2: Add your website and API
 
- Exp: /shortlink xtz.in 4b392f8eb6ad711fbe58
+ Exp: /shortlink mdiskshort.in ce99efd97d05ce5f3698112d843b01a1f6e735d6
 
  Add a video
 
@@ -549,7 +549,7 @@ Also your tutorial will be Added Your Group..."""
 
  దశ 2: మీ వెబ్‌సైట్ మరియు APIని జోడించండి
 
- గడువు: /shortlink xtz.in 4b392f8eb6ad711fbe58
+ గడువు: /shortlink mdiskshort.in ce99efd97d05ce5f3698112d843b01a1f6e735d6
 
  వీడియోను జోడించండి
 
@@ -576,7 +576,7 @@ Also your tutorial will be Added Your Group..."""
 
  चरण 2: अपनी वेबसाइट और एपीआई जोड़ें
 
- एक्सप: /shortlink xtz.in 4b392f8eb6ad711fbe58
+ एक्सप: /shortlink mdiskshort.in ce99efd97d05ce5f3698112d843b01a1f6e735d6
 
  एक वीडियो जोड़ें
 
@@ -603,7 +603,7 @@ Also your tutorial will be Added Your Group..."""
 
  ഘട്ടം 2: നിങ്ങളുടെ വെബ്‌സൈറ്റും API-യും ചേർക്കുക
 
- കാലഹരണപ്പെടൽ: /shortlink xtz.in 4b392f8eb6ad711fbe58
+ കാലഹരണപ്പെടൽ: /shortlink mdiskshort.in ce99efd97d05ce5f3698112d843b01a1f6e735d6
 
  ഒരു വീഡിയോ ചേർക്കുക
 
@@ -630,7 +630,7 @@ Also your tutorial will be Added Your Group..."""
 
  مرحلہ 2: اپنی ویب سائٹ اور API شامل کریں۔
 
- Exp: /shortlink xtz.in 4b392f8eb6ad711fbe58
+ Exp: /shortlink mdiskshort.in ce99efd97d05ce5f3698112d843b01a1f6e735d6
 
  ایک ویڈیو شامل کریں۔
 
@@ -657,7 +657,7 @@ Also your tutorial will be Added Your Group..."""
 
  પગલું 2: તમારી વેબસાઇટ અને API ઉમેરો
 
- સમાપ્તિ: /shortlink xtz.in 4b392f8eb6ad711fbe58
+ સમાપ્તિ: /shortlink mdiskshort.in ce99efd97d05ce5f3698112d843b01a1f6e735d6
 
  વિડિઓ ઉમેરો
 
@@ -683,7 +683,7 @@ Also your tutorial will be Added Your Group..."""
 
  ಹಂತ 2: ನಿಮ್ಮ ವೆಬ್‌ಸೈಟ್ ಮತ್ತು API ಸೇರಿಸಿ
 
- ಅವಧಿ: /shortlink xtz.in 4b392f8eb6ad711fbe58
+ ಅವಧಿ: /shortlink mdiskshort.in ce99efd97d05ce5f3698112d843b01a1f6e735d6
 
  ವೀಡಿಯೊ ಸೇರಿಸಿ
 
@@ -709,7 +709,7 @@ Also your tutorial will be Added Your Group..."""
 
  ধাপ 2: আপনার ওয়েবসাইট এবং API যোগ করুন
 
- মেয়াদ: /shortlink xtz.in 4b392f8eb6ad711fbe58
+ মেয়াদ: /shortlink mdiskshort.in ce99efd97d05ce5f3698112d843b01a1f6e735d6
 
  একটি ভিডিও যোগ করুন
 

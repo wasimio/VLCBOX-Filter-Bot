@@ -76,11 +76,14 @@ async def start():
         except:
             print("Make Your Bot Admin In File Channels With Full Rights")
     try:
-        if AUTH_CHANNEL:
-            k = await VLCBoxBot.send_message(chat_id=AUTH_CHANNEL, text="**Bot Restarted**")
-            await k.delete()
-    except:
-        print("Make Your Bot Admin In Force Subscribe Channel With Full Rights")
+        for ch in AUTH_CHANNEL:
+            try:
+                k = await VLCBoxBot.send_message(chat_id=ch, text="**Bot Restarted**")
+                await k.delete()
+            except:
+                print(f"Make Your Bot Admin In Force Subscribe Channel {ch} With Full Rights")
+    except Exception as e:
+        print(e)
     if CLONE_MODE == True:
         print("Restarting All Clone Bots.......")
         await restart_bots()
