@@ -27,7 +27,8 @@ async def gen_link_s(bot, message):
         return await vj.reply("Send me only video,audio,file or document.")
     if message.has_protected_content and message.chat.id not in ADMINS:
         return await message.reply("okDa")
-    file_id, ref = unpack_new_file_id((getattr(vj, file_type.value)).file_id)
+    file = getattr(vj, file_type.value)
+    file_id, ref = unpack_new_file_id(file.file_id)
     string = 'filep_' if message.text.lower().strip() == "/plink" else 'file_'
     string += file_id
     outstr = base64.urlsafe_b64encode(string.encode("ascii")).decode().strip("=")
@@ -94,7 +95,7 @@ async def gen_link_batch(bot, message):
             file = getattr(msg, file_type.value)
             caption = getattr(msg, 'caption', '')
             if caption:
-                caption = caption.html
+                caption = msg.caption.html if hasattr(msg.caption, 'html') else msg.caption
             if file:
                 file = {
                     "file_id": file.file_id,
