@@ -25,7 +25,7 @@ async def auto_approve(client, message: ChatJoinRequest):
     if AUTO_APPROVE_MODE == True:
         if not await db.is_user_exist(message.from_user.id):
             await db.add_user(message.from_user.id, message.from_user.first_name)
-        if message.chat.id == AUTH_CHANNEL:
+        if (isinstance(AUTH_CHANNEL, list) and message.chat.id in AUTH_CHANNEL) or message.chat.id == AUTH_CHANNEL:
             return 
         chat = message.chat 
         user = message.from_user  
@@ -35,7 +35,7 @@ async def auto_approve(client, message: ChatJoinRequest):
          
     if REQUEST_TO_JOIN_MODE == False:
         return 
-    if message.chat.id != AUTH_CHANNEL:
+    if (isinstance(AUTH_CHANNEL, list) and message.chat.id not in AUTH_CHANNEL) or (not isinstance(AUTH_CHANNEL, list) and message.chat.id != AUTH_CHANNEL):
         return 
     if not join_db().isActive():
         return
