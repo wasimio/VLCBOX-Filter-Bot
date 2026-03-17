@@ -31,10 +31,10 @@ async def save_file(media):
         'file_id': file_id,
         'file_name': new_file_name,
         'file_size': media.file_size,
-        'caption': media.caption.html if media.caption else None
+        'caption': media.caption if isinstance(media.caption, str) else (media.caption.html if media.caption else None)
     }
 
-    if is_file_already_saved(file_id, file_name):
+    if is_file_already_saved(file_id, new_file_name):
         return False, 0
 
     try:
@@ -58,6 +58,8 @@ async def save_file(media):
 
 def clean_file_name(file_name):
     """Clean and format the file name."""
+    if not file_name:
+        return "No Name"
     file_name = re.sub(r"(_|\-|\.|\+)", " ", str(file_name)) 
     unwanted_chars = ['[', ']', '(', ')', '{', '}']
     
@@ -68,11 +70,15 @@ def clean_file_name(file_name):
 
 def is_file_already_saved(file_id, file_name):
     """Check if the file is already saved in either collection."""
-    found1 = {'file_name': file_name}
-    found = {'file_id': file_id}
+    query = {
+        '$or': [
+            {'file_id': file_id},
+            {'file_name': file_name}
+        ]
+    }
 
     for collection in [col, sec_col]:
-        if collection.find_one(found1) or collection.find_one(found):
+        if collection.find_one(query):
             print(f"{file_name} is already saved.")
             return True
             
