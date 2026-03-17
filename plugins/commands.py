@@ -515,8 +515,14 @@ async def start(client, message):
             await asyncio.sleep(1200)
             await k.edit("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
             return
-    user = message.from_user.id
-    files_ = await get_file_details(file_id)           
+    # Default prefix in case of fallback
+    if not pre:
+        pre = 'file'
+
+    # Try to get file details using the extracted file_id
+    files_ = await get_file_details(file_id)
+
+    # Fallback: if not found, maybe 'data' is the whole B64 string
     if not files_:
         try:
             # Try to decode if it is a base64 encoded string
@@ -526,12 +532,15 @@ async def start(client, message):
             else:
                 file_id = decoded_data
             files_ = await get_file_details(file_id)
-        except Exception as e:
-            logger.error(f"Error decoding or getting file details: {e}")
+        except:
             pass
 
+    # Final attempt: search DB with the raw data string (in case prefix was part of the stored ID)
     if not files_:
-        return await message.reply('<b><i>No such file exist.</b></i>')
+        files_ = await get_file_details(data)
+
+    if not files_:
+        return await message.reply('<b><i>Nᴏ sᴜᴄʜ ғɪʟᴇ ᴇxɪsᴛ ᴏʀ link ᴇxᴘɪʀᴇᴅ. 🕵️\nPʟᴇᴀsᴇ ᴛʀʏ sᴇᴀʀᴄʜɪɴɢ ᴀɢᴀɪɴ ɪɴ ᴛʜᴇ ɢʀᴏᴜᴘ.</b></i>')
 
     files = files_
     title = files.get("file_name", "No Name")
@@ -552,7 +561,10 @@ async def start(client, message):
     if not f_caption:
         f_caption = f"@vlcbox {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), title.split()))}"
 
+    # Check Premium/Verification status
     if not await db.has_premium_access(message.from_user.id):
+        # We might check if they ARE coming from a valid file shortlink here
+        # but standard is to still check VERIFY if it's overall enabled.
         if VERIFY and not await check_verification(client, message.from_user.id):
             btn = [[
                 InlineKeyboardButton("ᴠᴇʀɪғʏ", url=await get_token(client, message.from_user.id, f"https://telegram.me/{temp.U_NAME}?start="))
@@ -569,17 +581,21 @@ async def start(client, message):
             )
             return
 
+    # User is allowed to get the file
     reply_markup = None
     if STREAM_MODE:
-        button = [[InlineKeyboardButton('sᴛʀᴇᴀᴍ ᴀɴᴅ ᴅᴏᴡɴʟᴏᴀᴅ', callback_data=f'generate_stream_link:{file_id}')]]
+        # Use the ID that worked to find the file
+        button = [[InlineKeyboardButton('sᴛʀᴇᴀᴍ ᴀɴᴅ ᴅᴏᴡɴʟᴏᴀᴅ', callback_data=f'generate_stream_link:{files["file_id"]}')]]
         reply_markup = InlineKeyboardMarkup(button)
 
     try:
+        # Priority 1: Use file_ref (original TG ID) if present. 
+        # Priority 2: Use file_id (Custom short ID) which most Pyrogram versions understand if generated correctly.
         msg = await client.send_cached_media(
             chat_id=message.from_user.id,
             file_id=files.get('file_ref', files['file_id']),
             caption=f_caption,
-            protect_content=True if pre == 'filep' or pre == 'allfilesp' else False,
+            protect_content=True if pre in ['filep', 'allfilesp'] else False,
             reply_markup=reply_markup
         )
         
@@ -588,10 +604,20 @@ async def start(client, message):
         
         await asyncio.sleep(600)
         await msg.delete()
-        await k.edit_text("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴀɢᴀɪɴ ᴛʜᴇɴ ᴄʟɪᴄᴋ ᴏɴ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ</b>", reply_markup=InlineKeyboardMarkup(btn))
+        await k.edit_text("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ.. ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴀɢᴀɪɴ ᴛʜᴇɴ ᴄʟɪᴄᴋ ᴏɴ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ</b>", reply_markup=InlineKeyboardMarkup(btn))
     except Exception as e:
         logger.error(f"Failed to send file: {e}")
-        await message.reply_text(f"<b>❌ Error: Failed to deliver file.\nReason: {e}</b>")
+        # Final fallback: Try sending just the file_id string if everything else failed
+        try:
+             await client.send_cached_media(
+                chat_id=message.from_user.id,
+                file_id=files['file_id'],
+                caption=f_caption,
+                protect_content=True if pre in ['filep', 'allfilesp'] else False,
+                reply_markup=reply_markup
+            )
+        except:
+            await message.reply_text(f"<b>❌ Error: Failed to deliver file.\nReason: {e}\n\nThis usually happens if the file was deleted from the original channel.</b>")
     return   
 
 @Client.on_message(filters.command('channel') & filters.user(ADMINS))
