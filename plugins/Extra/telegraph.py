@@ -9,18 +9,20 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 
 def upload_image_requests(image_path):
-    upload_url = "https://envs.sh"
-
+    """Uploads an image to graph.org (Telegraph)"""
+    upload_url = "https://graph.org/upload"
     try:
         with open(image_path, 'rb') as file:
-            files = {'file': file} 
+            files = {'file': ('file', file, 'image/jpeg')}
             response = requests.post(upload_url, files=files)
-
             if response.status_code == 200:
-                return response.text.strip() 
+                data = response.json()
+                if isinstance(data, list) and len(data) > 0:
+                    return "https://graph.org" + data[0]['src']
+                return None
             else:
-                return print(f"Upload failed with status code {response.status_code}")
-
+                print(f"Upload failed with status code {response.status_code}")
+                return None
     except Exception as e:
         print(f"Error during upload: {e}")
         return None
