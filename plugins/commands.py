@@ -1061,12 +1061,7 @@ async def requests(bot, message):
         success = False
     
     if success:
-        link = await bot.create_chat_invite_link(int(REQST_CHANNEL))
-        btn = [[
-            InlineKeyboardButton('Join Channel', url=link.invite_link),
-            InlineKeyboardButton('View Request', url=f"{reported_post.link}")
-        ]]
-        await message.reply_text("<b>Your request has been added! Please wait for some time.\n\nJoin Channel First & View Request</b>", reply_markup=InlineKeyboardMarkup(btn))
+        await message.reply_text("<b>ʏᴏᴜʀ ʀᴇǫᴜᴇsᴛ ʜᴀs ʙᴇᴇɴ ᴀᴅᴅᴇᴅ! ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ ғᴏʀ sᴏᴍᴇ ᴛɪᴍᴇ.\n\nᴏᴜʀ ᴀᴅᴍɪɴs ᴡɪʟʟ ᴜᴘʟᴏᴀᴅ ʏᴏᴜʀ ʀᴇᴏ̨ᴜᴇsᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ sᴏᴏɴ!</b>")
     
 @Client.on_message(filters.command("send") & filters.user(ADMINS))
 async def send_msg(bot, message):
