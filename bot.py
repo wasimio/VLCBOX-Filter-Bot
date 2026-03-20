@@ -39,17 +39,18 @@ async def start():
     await VLCBoxBot.start()
     bot_info = await VLCBoxBot.get_me()
     await initialize_clients()
-    for name in files:
-        with open(name) as a:
-            patt = Path(a.name)
-            plugin_name = patt.stem.replace(".py", "")
-            plugins_dir = Path(f"plugins/{plugin_name}.py")
-            import_path = "plugins.{}".format(plugin_name)
-            spec = importlib.util.spec_from_file_location(import_path, plugins_dir)
-            load = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(load)
-            sys.modules["plugins." + plugin_name] = load
-            print("VLCBox Imported => " + plugin_name)
+    # The following loop is redundant as VLCBoxBot already loads plugins automatically
+    # for name in files:
+    #     with open(name) as a:
+    #         patt = Path(a.name)
+    #         plugin_name = patt.stem.replace(".py", "")
+    #         plugins_dir = Path(f"plugins/{plugin_name}.py")
+    #         import_path = "plugins.{}".format(plugin_name)
+    #         spec = importlib.util.spec_from_file_location(import_path, plugins_dir)
+    #         load = importlib.util.module_from_spec(spec)
+    #         spec.loader.exec_module(load)
+    #         sys.modules["plugins." + plugin_name] = load
+    #         print("VLCBox Imported => " + plugin_name)
     if ON_HEROKU:
         asyncio.create_task(ping_server())
     b_users, b_chats = await db.get_banned()
@@ -75,15 +76,7 @@ async def start():
             await k.delete()
         except:
             print("Make Your Bot Admin In File Channels With Full Rights")
-    try:
-        for ch in AUTH_CHANNEL:
-            try:
-                k = await VLCBoxBot.send_message(chat_id=ch, text="**Bot Restarted**")
-                await k.delete()
-            except:
-                print(f"Make Your Bot Admin In Force Subscribe Channel {ch} With Full Rights")
-    except Exception as e:
-        print(e)
+
     if CLONE_MODE == True:
         print("Restarting All Clone Bots.......")
         await restart_bots()

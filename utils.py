@@ -2,9 +2,10 @@
 # Subscribe Telegram Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
 
-import logging, asyncio, os, re, random, pytz, aiohttp, requests, string, json, http.client
+import logging, asyncio, os, re, random, pytz, aiohttp, requests, string, json, http.client, time
+from urllib.parse import quote_plus
 from info import *
-from imdb import Cinemagoer 
+# from imdb import Cinemagoer 
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram import enums
 from pyrogram.errors import *
@@ -22,7 +23,7 @@ logger.setLevel(logging.INFO)
 join_db = JoinReqs
 BTN_URL_REGEX = re.compile(r"(\[([^\[]+?)\]\((buttonurl|buttonalert):(?:/{0,2})(.+?)(:same)?\))")
 
-imdb = Cinemagoer() 
+# imdb = Cinemagoer() 
 TOKENS = {}
 VERIFIED = {}
 BANNED = {}
@@ -65,35 +66,29 @@ async def pub_is_subscribed(bot, query, channel):
 async def is_subscribed(bot, query):
     if not AUTH_CHANNEL:
         return True
+    user_id = query.from_user.id if query.from_user else query.message.chat.id
+    
+    # Check if user is in Join Requests database (for ALL channels)
+    if REQUEST_TO_JOIN_MODE and join_db().isActive():
+        try:
+            user = await join_db().get_user(user_id)
+            if user:
+                return True # User confirmed in Join Requests DB
+        except Exception as e:
+            logger.error(f"Error checking join_db: {e}")
+
+    # Fallback to direct member check for each channel
     for channel_id in AUTH_CHANNEL:
-        if REQUEST_TO_JOIN_MODE == True and join_db().isActive():
-            try:
-                user = await join_db().get_user(query.from_user.id)
-                if user and user["user_id"] == query.from_user.id:
-                    continue
-                else:
-                    try:
-                        user_data = await bot.get_chat_member(channel_id, query.from_user.id)
-                    except UserNotParticipant:
-                        return False
-                    except Exception as e:
-                        logger.exception(e)
-                    else:
-                        if user_data.status == enums.ChatMemberStatus.BANNED:
-                            return False
-            except Exception as e:
-                logger.exception(e)
+        try:
+            user_msg = await bot.get_chat_member(channel_id, user_id)
+            if user_msg.status == enums.ChatMemberStatus.BANNED:
                 return False
-        else:
-            try:
-                user = await bot.get_chat_member(channel_id, query.from_user.id)
-            except UserNotParticipant:
-                return False
-            except Exception as e:
-                logger.exception(e)
-            else:
-                if user.status == enums.ChatMemberStatus.BANNED:
-                    return False
+        except UserNotParticipant:
+            return False
+        except Exception as e:
+            logger.error(f"Error checking subscription for {channel_id}: {e}")
+            continue # If bot is not admin or other error, assume subscribed to this channel
+
     return True
 
 async def get_poster(query, bulk=False, id=False, file=None):
@@ -110,70 +105,83 @@ async def get_poster(query, bulk=False, id=False, file=None):
                 year = list_to_str(year[:1]) 
         else:
             year = None
-        movieid = imdb.search_movie(title.lower(), results=10)
-        if not movieid:
-            return None
+        
+        # TMDB Search
+        tmdb_url = f"https://api.themoviedb.org/3/search/multi?api_key={TMDB_API_KEY}&query={quote_plus(title)}"
         if year:
-            filtered=list(filter(lambda k: str(k.get('year')) == str(year), movieid))
-            if not filtered:
-                filtered = movieid
-        else:
-            filtered = movieid
-        movieid=list(filter(lambda k: k.get('kind') in ['movie', 'tv series'], filtered))
-        if not movieid:
-            movieid = filtered
-        if bulk:
-            return movieid
-        movieid = movieid[0].movieID
+            tmdb_url += f"&year={year}"
+            
+        async with aiohttp.ClientSession() as session:
+            async with session.get(tmdb_url) as response:
+                if response.status != 200:
+                    logger.error(f"TMDB API Error: {response.status}")
+                    return None
+                data = await response.json()
+                results = data.get('results', [])
+                if not results:
+                    return None
+                
+                # Filter for movie or tv
+                results = [r for r in results if r.get('media_type') in ['movie', 'tv']]
+                if not results:
+                    return None
+                
+                if bulk:
+                    return results
+                
+                result = results[0]
+                tmdb_id = result['id']
+                media_type = result['media_type']
+
+        # Get detailed info
+        detail_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}?api_key={TMDB_API_KEY}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(detail_url) as response:
+                if response.status != 200:
+                    return None
+                movie = await response.json()
     else:
-        movieid = query
-    movie = imdb.get_movie(movieid)
-    if not movie:
-        return None
-    if movie.get("original air date"):
-        date = movie["original air date"]
-    elif movie.get("year"):
-        date = movie.get("year")
-    else:
-        date = "N/A"
-    plot = ""
-    if not LONG_IMDB_DESCRIPTION:
-        plot = movie.get('plot')
-        if plot and len(plot) > 0:
-            plot = plot[0]
-    else:
-        plot = movie.get('plot outline')
+        # If ID is provided, we need to know if it's movie or tv. Usually it's movie for these bots.
+        # But for reliability, we can try to guess or require a prefix.
+        # For now, let's assume movie if it's just an ID
+        tmdb_id = query
+        media_type = "movie"
+        detail_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}?api_key={TMDB_API_KEY}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(detail_url) as response:
+                if response.status != 200:
+                    return None
+                movie = await response.json()
+
+    title = movie.get('title') or movie.get('name')
+    date = movie.get('release_date') or movie.get('first_air_date') or "N/A"
+    year = date.split('-')[0] if date != "N/A" else "N/A"
+    rating = str(movie.get('vote_average', 'N/A'))
+    plot = movie.get('overview', 'N/A')
     if plot and len(plot) > 800:
         plot = plot[0:800] + "..."
+    
+    genres = ", ".join([g['name'] for g in movie.get('genres', [])])
+    
+    # Use backdrop instead of poster as requested
+    backdrop = movie.get('backdrop_path')
+    if backdrop:
+        item_image = f"https://image.tmdb.org/t/p/w1280{backdrop}"
+    else:
+        # Fallback to poster if no backdrop
+        poster = movie.get('poster_path')
+        item_image = f"https://image.tmdb.org/t/p/w1280{poster}" if poster else None
 
     return {
-        'title': movie.get('title'),
-        'votes': movie.get('votes'),
-        "aka": list_to_str(movie.get("akas")),
-        "seasons": movie.get("number of seasons"),
-        "box_office": movie.get('box office'),
-        'localized_title': movie.get('localized title'),
-        'kind': movie.get("kind"),
-        "imdb_id": f"tt{movie.get('imdbID')}",
-        "cast": list_to_str(movie.get("cast")),
-        "runtime": list_to_str(movie.get("runtimes")),
-        "countries": list_to_str(movie.get("countries")),
-        "certificates": list_to_str(movie.get("certificates")),
-        "languages": list_to_str(movie.get("languages")),
-        "director": list_to_str(movie.get("director")),
-        "writer":list_to_str(movie.get("writer")),
-        "producer":list_to_str(movie.get("producer")),
-        "composer":list_to_str(movie.get("composer")) ,
-        "cinematographer":list_to_str(movie.get("cinematographer")),
-        "music_team": list_to_str(movie.get("music department")),
-        "distributors": list_to_str(movie.get("distributors")),
+        'title': title,
+        'votes': movie.get('vote_count'),
+        'genres': genres,
         'release_date': date,
-        'year': movie.get('year'),
-        'genres': list_to_str(movie.get("genres")),
-        'poster': movie.get('full-size cover url'),
+        'year': year,
+        'poster': item_image, # Field name remains 'poster' for compatibility with other code
         'plot': plot,
-        'rating': str(movie.get("rating")),
-        'url':f'https://www.imdb.com/title/tt{movieid}'
+        'rating': rating,
+        'url': f'https://www.themoviedb.org/{media_type}/{movie.get("id")}'
     }
 
 async def broadcast_messages(user_id, message):
@@ -579,27 +587,21 @@ async def verify_user(bot, userid, token):
         await db.add_user(user.id, user.first_name)
         await bot.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(user.id, user.mention))
     TOKENS[user.id] = {token: True}
-    tz = pytz.timezone('Asia/Kolkata')
-    today = date.today()
-    VERIFIED[user.id] = str(today)
+    VERIFIED[user.id] = time.time()
 
 async def check_verification(bot, userid):
     user = await bot.get_users(userid)
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
         await bot.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(user.id, user.mention))
-    tz = pytz.timezone('Asia/Kolkata')
-    today = date.today()
     if user.id in VERIFIED.keys():
-        EXP = VERIFIED[user.id]
-        years, month, day = EXP.split('-')
-        comp = date(int(years), int(month), int(day))
-        if comp<today:
+        last_verify = VERIFIED[user.id]
+        if (time.time() - last_verify) > 21600: # 6 hours in seconds
             return False
         else:
             return True
     else:
-        return False  
+        return False
     
 async def send_all(bot, userid, files, ident, chat_id, user_name, query):
     settings = await get_settings(chat_id)
@@ -609,7 +611,7 @@ async def send_all(bot, userid, files, ident, chat_id, user_name, query):
         await save_group_settings(message.chat.id, 'is_shortlink', False)
         ENABLE_SHORTLINK = False
     try:
-        if ENABLE_SHORTLINK:
+        if ENABLE_SHORTLINK and not VERIFY:
             for file in files:
                 title = file["file_name"]
                 size = get_size(file["file_size"])
@@ -654,7 +656,7 @@ async def send_all(bot, userid, files, ident, chat_id, user_name, query):
         await query.answer('Hᴇʏ, Sᴛᴀʀᴛ Bᴏᴛ Fɪʀsᴛ Aɴᴅ Cʟɪᴄᴋ Sᴇɴᴅ Aʟʟ', show_alert=True)
         
 async def get_cap(settings, remaining_seconds, files, query, total_results, search):
-    if settings["imdb"]:
+    if settings.get("tmdb", TMDB):
         IMDB_CAP = temp.IMDB_CAP.get(query.from_user.id)
         if IMDB_CAP:
             cap = IMDB_CAP
@@ -662,37 +664,16 @@ async def get_cap(settings, remaining_seconds, files, query, total_results, sear
             for file in files:
                 cap += f"<b>📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{file['file_id']}'>[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}\n\n</a></b>"
         else:
-            imdb = await get_poster(search, file=(files[0])["file_name"]) if settings["imdb"] else None
+            imdb = await get_poster(search, file=(files[0])["file_name"]) if settings.get("tmdb", TMDB) else None
             if imdb:
-                TEMPLATE = script.IMDB_TEMPLATE_TXT
+                TEMPLATE = script.TMDB_TEMPLATE_TXT
                 cap = TEMPLATE.format(
                     qurey=search,
                     title=imdb['title'],
-                    votes=imdb['votes'],
-                    aka=imdb["aka"],
-                    seasons=imdb["seasons"],
-                    box_office=imdb['box_office'],
-                    localized_title=imdb['localized_title'],
-                    kind=imdb['kind'],
-                    imdb_id=imdb["imdb_id"],
-                    cast=imdb["cast"],
-                    runtime=imdb["runtime"],
-                    countries=imdb["countries"],
-                    certificates=imdb["certificates"],
-                    languages=imdb["languages"],
-                    director=imdb["director"],
-                    writer=imdb["writer"],
-                    producer=imdb["producer"],
-                    composer=imdb["composer"],
-                    cinematographer=imdb["cinematographer"],
-                    music_team=imdb["music_team"],
-                    distributors=imdb["distributors"],
-                    release_date=imdb['release_date'],
+                    rating=imdb['rating'],
                     year=imdb['year'],
                     genres=imdb['genres'],
-                    poster=imdb['poster'],
                     plot=imdb['plot'],
-                    rating=imdb['rating'],
                     url=imdb['url'],
                     **locals()
                 )

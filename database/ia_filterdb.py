@@ -29,6 +29,7 @@ async def save_file(media):
     
     file = {
         'file_id': file_id,
+        'file_ref': file_ref,
         'file_name': new_file_name,
         'file_size': media.file_size,
         'caption': media.caption if isinstance(media.caption, str) else (media.caption.html if media.caption else None)
