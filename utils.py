@@ -573,27 +573,21 @@ async def verify_user(bot, userid, token):
         await db.add_user(user.id, user.first_name)
         await bot.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(user.id, user.mention))
     TOKENS[user.id] = {token: True}
-    tz = pytz.timezone('Asia/Kolkata')
-    today = date.today()
-    VERIFIED[user.id] = str(today)
+    VERIFIED[user.id] = time.time()
 
 async def check_verification(bot, userid):
     user = await bot.get_users(userid)
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
         await bot.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(user.id, user.mention))
-    tz = pytz.timezone('Asia/Kolkata')
-    today = date.today()
     if user.id in VERIFIED.keys():
-        EXP = VERIFIED[user.id]
-        years, month, day = EXP.split('-')
-        comp = date(int(years), int(month), int(day))
-        if comp<today:
+        last_verify = VERIFIED[user.id]
+        if (time.time() - last_verify) > 21600: # 6 hours in seconds
             return False
         else:
             return True
     else:
-        return False  
+        return False
     
 async def send_all(bot, userid, files, ident, chat_id, user_name, query):
     settings = await get_settings(chat_id)
@@ -603,7 +597,7 @@ async def send_all(bot, userid, files, ident, chat_id, user_name, query):
         await save_group_settings(message.chat.id, 'is_shortlink', False)
         ENABLE_SHORTLINK = False
     try:
-        if ENABLE_SHORTLINK:
+        if ENABLE_SHORTLINK and not VERIFY:
             for file in files:
                 title = file["file_name"]
                 size = get_size(file["file_size"])

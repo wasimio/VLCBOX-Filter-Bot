@@ -1360,7 +1360,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             f_caption = f"{files['file_name']}"
 
         try:
-            if settings['is_shortlink'] and not await db.has_premium_access(query.from_user.id):
+            if settings['is_shortlink'] and not await db.has_premium_access(query.from_user.id) and not VERIFY:
                 if clicked == typed:
                     temp.SHORT[clicked] = query.message.chat.id
                     # Encode chat_id into URL so it survives bot restarts (temp.SHORT is in-memory)
@@ -1369,7 +1369,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     return
                 else:
                     await query.answer(f"Hᴇʏ {query.from_user.first_name}, Tʜɪs Is Nᴏᴛ Yᴏᴜʀ Mᴏᴠɪᴇ Rᴇǫᴜᴇsᴛ. Rᴇǫᴜᴇsᴛ Yᴏᴜʀ's !", show_alert=True)
-            elif settings['is_shortlink'] and await db.has_premium_access(query.from_user.id):
+            elif settings['is_shortlink'] and await db.has_premium_access(query.from_user.id) and not VERIFY:
                 if clicked == typed:
                     await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start={ident}_{file_id}")
                     return
@@ -1397,9 +1397,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
         settings = await get_settings(chat_id)
         pre = 'allfilesp' if settings['file_secure'] else 'allfiles'
         try:
-            if settings['is_shortlink'] and not await db.has_premium_access(query.from_user.id):
+            if settings['is_shortlink'] and not await db.has_premium_access(query.from_user.id) and not VERIFY:
                 await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles1_{chat_id_str}_{key}")
-            elif settings['is_shortlink'] and await db.has_premium_access(query.from_user.id):
+            elif settings['is_shortlink'] and await db.has_premium_access(query.from_user.id) and not VERIFY:
                 await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start={pre}_{key}")
                 return 
             else:
