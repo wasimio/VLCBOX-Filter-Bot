@@ -1797,6 +1797,25 @@ async def cb_handler(client: Client, query: CallbackQuery):
         else:
             await query.answer("Yᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ sᴜғғɪᴄɪᴀɴᴛ ʀɪɢᴛs ᴛᴏ ᴅᴏ ᴛʜɪs !", show_alert=True)
 
+    elif query.data.startswith("request_file"):
+        ident, content = query.data.split("#", 1)
+        user_id = query.from_user.id
+        mention = query.from_user.mention
+        
+        if REQST_CHANNEL is not None:
+            btn = [[
+                InlineKeyboardButton('Show Options', callback_data=f'show_option#{user_id}')
+            ]]
+            await client.send_message(
+                chat_id=REQST_CHANNEL, 
+                text=f"<b>𝖱𝖾𝗉𝗈𝗋𝗍𝖾𝗋 : {mention} ({user_id})\n\n𝖬𝖾𝗌𝗌𝖺𝗀𝖾 : {content} (Requested via Button)</b>", 
+                reply_markup=InlineKeyboardMarkup(btn)
+            )
+            await query.answer("Your request has been added! Please wait for some time.", show_alert=True)
+            await query.message.edit_text(f"<b>ʏᴏᴜʀ ʀᴇǫᴜᴇsᴛ ʜᴀs ʙᴇᴇɴ ᴀᴅᴅᴇᴅ! ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ ғᴏʀ sᴏᴍᴇ ᴛɪᴍᴇ.\n\nᴏᴜʀ ᴀᴅᴍɪɴs ᴡɪʟʟ ᴜᴘʟᴏᴀᴅ ʏᴏᴜʀ ʀᴇᴏ̨ᴜᴇsᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ sᴏᴏɴ!</b>")
+        else:
+            await query.answer("Request system is currently disabled.", show_alert=True)
+
     elif query.data.startswith("generate_stream_link"):
         _, file_id = query.data.split(":")
         try:
@@ -2774,7 +2793,8 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-            InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")
+            InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}"),
+            InlineKeyboardButton("Rᴇǫᴜᴇsᴛ", callback_data=f"request_file#{mv_rqst}")
         ]]
         if NO_RESULTS_MSG:
             await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
@@ -2786,7 +2806,8 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     if not movies:
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-            InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")
+            InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}"),
+            InlineKeyboardButton("Rᴇǫᴜᴇsᴛ", callback_data=f"request_file#{mv_rqst}")
         ]]
         if NO_RESULTS_MSG:
             await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
@@ -2812,7 +2833,8 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                 break
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-            InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")
+            InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}"),
+            InlineKeyboardButton("Rᴇǫᴜᴇsᴛ", callback_data=f"request_file#{mv_rqst}")
         ]]
         if NO_RESULTS_MSG:
             await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
@@ -2830,7 +2852,10 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             ]
             for k, movie_name in enumerate(movielist)
         ]
-        btn.append([InlineKeyboardButton(text="Close", callback_data=f'spol#{reqstr1}#close_spellcheck')])
+        btn.append([
+            InlineKeyboardButton(text="Rᴇǫᴜᴇsᴛ", callback_data=f"request_file#{mv_rqst}"),
+            InlineKeyboardButton(text="Close", callback_data=f'spol#{reqstr1}#close_spellcheck')
+        ])
         spell_check_del = await reply_msg.edit_text(
             text=script.CUDNT_FND.format(mv_rqst),
             reply_markup=InlineKeyboardMarkup(btn)
