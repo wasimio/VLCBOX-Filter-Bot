@@ -917,18 +917,40 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
         btn.append(
             [InlineKeyboardButton(text="𝐍𝐎 𝐌𝐎𝐑𝐄 𝐏𝐀𝐆𝐄𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄",callback_data="pages")]
         )
-    imdb = await get_poster(search, file=(files[0])['file_name']) if settings.get("tmdb", TMDB) else None
+    imdb = await get_poster(search, file=(files[0])['file_name']) if settings["imdb"] else None
     cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
     remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
-    TEMPLATE = script.TMDB_TEMPLATE_TXT
+    TEMPLATE = script.IMDB_TEMPLATE_TXT
     if imdb:
         cap = TEMPLATE.format(
+            qurey=search,
             title=imdb['title'],
-            rating=imdb['rating'],
+            votes=imdb['votes'],
+            aka=imdb["aka"],
+            seasons=imdb["seasons"],
+            box_office=imdb['box_office'],
+            localized_title=imdb['localized_title'],
+            kind=imdb['kind'],
+            imdb_id=imdb["imdb_id"],
+            cast=imdb["cast"],
+            runtime=imdb["runtime"],
+            countries=imdb["countries"],
+            certificates=imdb["certificates"],
+            languages=imdb["languages"],
+            director=imdb["director"],
+            writer=imdb["writer"],
+            producer=imdb["producer"],
+            composer=imdb["composer"],
+            cinematographer=imdb["cinematographer"],
+            music_team=imdb["music_team"],
+            distributors=imdb["distributors"],
+            release_date=imdb['release_date'],
             year=imdb['year'],
             genres=imdb['genres'],
+            poster=imdb['poster'],
             plot=imdb['plot'],
+            rating=imdb['rating'],
             url=imdb['url'],
             **locals()
         )
@@ -993,14 +1015,14 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         await asyncio.sleep(30)
         await k.delete()
         return
-    movielist += [movie.get('title') or movie.get('name') for movie in movies]
-    movielist += [f"{(movie.get('title') or movie.get('name'))} {(movie.get('release_date') or movie.get('first_air_date') or 'N/A').split('-')[0]}" for movie in movies]
+    movielist += [movie.get('title') for movie in movies]
+    movielist += [f"{movie.get('title')} {movie.get('year')}" for movie in movies]
     SPELL_CHECK[mv_id] = movielist
     if vj_search == True:
         vj_search_new = False
         vj_ai_msg = await reply_msg.edit_text("<b><i>Advance Ai Of VLCBox Try To Find Your Movie With Your Wrong Spelling.</i></b>")
         movienamelist = []
-        movienamelist += [movie.get('title') or movie.get('name') for movie in movies]
+        movienamelist += [movie.get('title') for movie in movies]
         for VLCBox in movienamelist:
             try:
                 mv_rqst = mv_rqst.capitalize()

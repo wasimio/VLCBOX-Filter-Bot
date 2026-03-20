@@ -3,6 +3,7 @@
 # Ask Doubt on telegram @rickakhtar
 
 import logging, asyncio, os, re, random, pytz, aiohttp, requests, string, json, http.client, time
+from urllib.parse import quote_plus
 from info import *
 # from imdb import Cinemagoer 
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
@@ -113,6 +114,7 @@ async def get_poster(query, bulk=False, id=False, file=None):
         async with aiohttp.ClientSession() as session:
             async with session.get(tmdb_url) as response:
                 if response.status != 200:
+                    logger.error(f"TMDB API Error: {response.status}")
                     return None
                 data = await response.json()
                 results = data.get('results', [])
