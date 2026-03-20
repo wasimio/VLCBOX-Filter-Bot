@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -15,7 +16,7 @@ from pyrogram.errors.exceptions.bad_request_400 import MessageTooLong, PeerIdInv
 from utils import get_settings, pub_is_subscribed, get_size, is_subscribed, save_group_settings, temp, verify_user, check_token, check_verification, get_token, get_shortlink, get_tutorial, get_seconds
 from database.connections_mdb import active_connection, mydb
 
-@Client.on_message(filters.new_chat_members & filters.group)
+@MainBot.on_message(filters.new_chat_members & filters.group)
 async def save_group(bot, message):
     r_j_check = [u.id for u in message.new_chat_members]
     if temp.ME in r_j_check:
@@ -75,7 +76,7 @@ async def save_group(bot, message):
             await asyncio.sleep(600)
             await (temp.MELCOW['welcome']).delete()
 
-@Client.on_message(filters.command('leave') & filters.user(ADMINS))
+@MainBot.on_message(filters.command('leave') & filters.user(ADMINS))
 async def leave_a_chat(bot, message):
     if len(message.command) == 1:
         return await message.reply('Give me a chat id')
@@ -103,7 +104,7 @@ async def leave_a_chat(bot, message):
     except Exception as e:
         await message.reply(f'Error - {e}')
 
-@Client.on_message(filters.command('disable') & filters.user(ADMINS))
+@MainBot.on_message(filters.command('disable') & filters.user(ADMINS))
 async def disable_chat(bot, message):
     if len(message.command) == 1:
         return await message.reply('Give me a chat id')
@@ -139,7 +140,7 @@ async def disable_chat(bot, message):
     except Exception as e:
         await message.reply(f"Error - {e}")
 
-@Client.on_message(filters.command('enable') & filters.user(ADMINS))
+@MainBot.on_message(filters.command('enable') & filters.user(ADMINS))
 async def re_enable_chat(bot, message):
     if len(message.command) == 1:
         return await message.reply('Give me a chat id')
@@ -157,7 +158,7 @@ async def re_enable_chat(bot, message):
     temp.BANNED_CHATS.remove(int(chat_))
     await message.reply("Chat Successfully re-enabled")
 
-@Client.on_message(filters.command('stats') & filters.incoming)
+@MainBot.on_message(filters.command('stats') & filters.incoming)
 async def get_ststs(bot, message):
     rju = await message.reply('Fetching stats..')
     try:
@@ -183,7 +184,7 @@ async def get_ststs(bot, message):
     except Exception as e:
         await rju.edit(f"Error - {e}")
 
-@Client.on_message(filters.command('invite') & filters.user(ADMINS))
+@MainBot.on_message(filters.command('invite') & filters.user(ADMINS))
 async def gen_invite(bot, message):
     if len(message.command) == 1:
         return await message.reply('Give me a chat id')
@@ -200,7 +201,7 @@ async def gen_invite(bot, message):
         return await message.reply(f'Error {e}')
     await message.reply(f'Here is your Invite Link {link.invite_link}')
 
-@Client.on_message(filters.command('ban') & filters.user(ADMINS))
+@MainBot.on_message(filters.command('ban') & filters.user(ADMINS))
 async def ban_a_user(bot, message):
     if len(message.command) == 1:
         return await message.reply('Give me a user id / username')
@@ -231,7 +232,7 @@ async def ban_a_user(bot, message):
         temp.BANNED_USERS.append(k.id)
         await message.reply(f"Successfully banned {k.mention}")
     
-@Client.on_message(filters.command('unban') & filters.user(ADMINS))
+@MainBot.on_message(filters.command('unban') & filters.user(ADMINS))
 async def unban_a_user(bot, message):
     if len(message.command) == 1:
         return await message.reply('Give me a user id / username')
@@ -262,7 +263,7 @@ async def unban_a_user(bot, message):
         temp.BANNED_USERS.remove(k.id)
         await message.reply(f"Successfully unbanned {k.mention}")
     
-@Client.on_message(filters.command('users') & filters.user(ADMINS))
+@MainBot.on_message(filters.command('users') & filters.user(ADMINS))
 async def list_users(bot, message):
     # https://t.me/GetTGLink/4184
     raju = await message.reply('Getting List Of Users')
@@ -280,7 +281,7 @@ async def list_users(bot, message):
             outfile.write(out)
         await message.reply_document('users.txt', caption="List Of Users")
 
-@Client.on_message(filters.command('chats') & filters.user(ADMINS))
+@MainBot.on_message(filters.command('chats') & filters.user(ADMINS))
 async def list_chats(bot, message):
     raju = await message.reply('Getting List Of chats')
     chats = await db.get_all_chats()

@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -8,7 +9,7 @@ from database.users_chats_db import db
 from info import ADMINS
 from utils import broadcast_messages, broadcast_messages_group
         
-@Client.on_message(filters.command("broadcast") & filters.user(ADMINS))
+@MainBot.on_message(filters.command("broadcast") & filters.user(ADMINS))
 async def pm_broadcast(bot, message):
     b_msg = await bot.ask(chat_id = message.from_user.id, text = "Now Send Me Your Broadcast Message")
     try:
@@ -52,7 +53,7 @@ async def pm_broadcast(bot, message):
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@vlcbox
 # Ask Doubt on telegram @rickakhtar
 
-@Client.on_message(filters.command("grp_broadcast") & filters.user(ADMINS))
+@MainBot.on_message(filters.command("grp_broadcast") & filters.user(ADMINS))
 async def broadcast_group(bot, message):
     b_msg = await bot.ask(chat_id = message.from_user.id, text = "Now Send Me Your Broadcast Message")
     groups = await db.get_all_chats()

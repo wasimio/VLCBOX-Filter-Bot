@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -27,7 +28,7 @@ def upload_image_requests(image_path):
         print(f"Error during upload: {e}")
         return None
 
-@Client.on_message(filters.command("telegraph") & filters.private)
+@MainBot.on_message(filters.command("telegraph") & filters.private)
 async def telegraph_upload(bot, update):
     t_msg = await bot.ask(chat_id = update.from_user.id, text = "Now Send Me Your Photo Or Video Under 5MB To Get Media Link.")
     if not t_msg.media:

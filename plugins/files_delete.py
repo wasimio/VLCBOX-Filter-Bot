@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -10,7 +11,7 @@ from database.ia_filterdb import col, sec_col, unpack_new_file_id
 logger = logging.getLogger(__name__)
 media_filter = filters.document | filters.video
 
-@Client.on_message(filters.chat(DELETE_CHANNELS) & media_filter)
+@MainBot.on_message(filters.chat(DELETE_CHANNELS) & media_filter)
 async def deletemultiplemedia(bot, message):
     """Delete Multiple files from database"""
 

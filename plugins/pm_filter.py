@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe Telegram Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -31,7 +32,7 @@ BUTTONS1 = {}
 BUTTONS2 = {}
 SPELL_CHECK = {}
 
-@Client.on_message(filters.group & filters.text & filters.incoming)
+@MainBot.on_message(filters.group & filters.text & filters.incoming)
 async def give_filter(client, message):
     if message.chat.id != SUPPORT_CHAT_ID:
         settings = await get_settings(message.chat.id)
@@ -72,7 +73,7 @@ async def give_filter(client, message):
         else:
             return await message.reply_text(f"<b>Hᴇʏ {message.from_user.mention}, {str(total_results)} ʀᴇsᴜʟᴛs ᴀʀᴇ ғᴏᴜɴᴅ ɪɴ ᴍʏ ᴅᴀᴛᴀʙᴀsᴇ ғᴏʀ ʏᴏᴜʀ ᴏ̨ᴜᴇʀʏ {search}. \n\nTʜɪs ɪs ᴀ sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ sᴏ ᴛʜᴀᴛ ʏᴏᴜ ᴄᴀɴ'ᴛ ɢᴇᴛ ғɪʟᴇs ғʀᴏᴍ ʜᴇʀᴇ...\n\nJᴏɪɴ ᴀɴᴅ Sᴇᴀʀᴄʜ Hᴇʀᴇ - {GRP_LNK}</b>")
 
-@Client.on_message(filters.private & filters.text & filters.incoming)
+@MainBot.on_message(filters.private & filters.text & filters.incoming)
 async def pm_text(bot, message):
     content = message.text
     user = message.from_user.first_name
@@ -83,7 +84,7 @@ async def pm_text(bot, message):
         reply_msg = await bot.send_message(message.from_user.id, f"<b><i>Searching For {content} 🔍</i></b>", reply_to_message_id=message.id)
         await auto_filter(bot, content, message, reply_msg, ai_search)
     
-@Client.on_callback_query(filters.regex(r"^next"))
+@MainBot.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
     ident, req, key, offset = query.data.split("_")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -229,7 +230,7 @@ async def next_page(bot, query):
             pass
     await query.answer()
 
-@Client.on_callback_query(filters.regex(r"^spol"))
+@MainBot.on_callback_query(filters.regex(r"^spol"))
 async def advantage_spoll_choker(bot, query):
     _, user, movie_ = query.data.split('#')
     movies = SPELL_CHECK.get(query.message.reply_to_message.id)
@@ -263,7 +264,7 @@ async def advantage_spoll_choker(bot, query):
                 await k.delete()
 
 # Year 
-@Client.on_callback_query(filters.regex(r"^years#"))
+@MainBot.on_callback_query(filters.regex(r"^years#"))
 async def years_cb_handler(client: Client, query: CallbackQuery):
 
     try:
@@ -312,7 +313,7 @@ async def years_cb_handler(client: Client, query: CallbackQuery):
     except MessageNotModified:
         pass
 
-@Client.on_callback_query(filters.regex(r"^fy#"))
+@MainBot.on_callback_query(filters.regex(r"^fy#"))
 async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -429,7 +430,7 @@ async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
 
 # Episode
 
-@Client.on_callback_query(filters.regex(r"^episodes#"))
+@MainBot.on_callback_query(filters.regex(r"^episodes#"))
 async def episodes_cb_handler(client: Client, query: CallbackQuery):
 
     try:
@@ -478,7 +479,7 @@ async def episodes_cb_handler(client: Client, query: CallbackQuery):
     except MessageNotModified:
         pass
 
-@Client.on_callback_query(filters.regex(r"^fe#"))
+@MainBot.on_callback_query(filters.regex(r"^fe#"))
 async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -597,7 +598,7 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
 
 #languages
 
-@Client.on_callback_query(filters.regex(r"^languages#"))
+@MainBot.on_callback_query(filters.regex(r"^languages#"))
 async def languages_cb_handler(client: Client, query: CallbackQuery):
 
     try:
@@ -646,7 +647,7 @@ async def languages_cb_handler(client: Client, query: CallbackQuery):
     except MessageNotModified:
         pass
 
-@Client.on_callback_query(filters.regex(r"^fl#"))
+@MainBot.on_callback_query(filters.regex(r"^fl#"))
 async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -763,7 +764,7 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
     
     
     
-@Client.on_callback_query(filters.regex(r"^seasons#"))
+@MainBot.on_callback_query(filters.regex(r"^seasons#"))
 async def seasons_cb_handler(client: Client, query: CallbackQuery):
 
     try:
@@ -814,7 +815,7 @@ async def seasons_cb_handler(client: Client, query: CallbackQuery):
     except MessageNotModified:
         pass
 
-@Client.on_callback_query(filters.regex(r"^fs#"))
+@MainBot.on_callback_query(filters.regex(r"^fs#"))
 async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
     _, seas, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -935,7 +936,7 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
         except MessageNotModified:
             pass
 
-@Client.on_callback_query(filters.regex(r"^qualities#"))
+@MainBot.on_callback_query(filters.regex(r"^qualities#"))
 async def qualities_cb_handler(client: Client, query: CallbackQuery):
 
     try:
@@ -980,7 +981,7 @@ async def qualities_cb_handler(client: Client, query: CallbackQuery):
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
     
 
-@Client.on_callback_query(filters.regex(r"^fl#"))
+@MainBot.on_callback_query(filters.regex(r"^fl#"))
 async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
     _, qual, key = query.data.split("#")
     search = FRESH.get(key)
@@ -1094,7 +1095,7 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
         except MessageNotModified:
             pass
                 
-@Client.on_callback_query()
+@MainBot.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
     if query.data == "close_data":
         await query.message.delete()

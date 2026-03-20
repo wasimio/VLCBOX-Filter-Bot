@@ -1,10 +1,11 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
 
 from pyrogram import Client, filters
 
-@Client.on_message(filters.command("stickerid") & filters.private)
+@MainBot.on_message(filters.command("stickerid") & filters.private)
 async def stickerid(bot, message):
     s_msg = await bot.ask(chat_id = message.from_user.id, text = "Now Send Me Your Sticker")
     if s_msg.sticker:

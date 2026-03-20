@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -8,7 +9,7 @@ from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
-@Client.on_message(filters.command(["genpassword", 'genpw']))
+@MainBot.on_message(filters.command(["genpassword", 'genpw']))
 async def password(bot, update):
     message = await update.reply_text(text="`Processing...`")
     password = "abcdefghijklmnopqrstuvwxyz1234567890!@#$%^&*()_+".lower()

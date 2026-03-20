@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -17,14 +18,14 @@ import logging
 logger = logging.getLogger(__name__)
 logging.getLogger("pyrogram").setLevel(logging.WARNING)
 
-@Client.on_callback_query(filters.regex('cancel'))
+@MainBot.on_callback_query(filters.regex('cancel'))
 async def cancel(bot,update):
     try:
         await update.message.delete()
     except:
         return
 
-@Client.on_callback_query(filters.regex("upload"))
+@MainBot.on_callback_query(filters.regex("upload"))
 async def doc(bot, update):
     try:
         type = update.data.split("_")[1]

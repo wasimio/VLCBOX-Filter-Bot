@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -6,7 +7,7 @@ from pyrogram import Client, filters
 from database.users_chats_db import db
 from info import RENAME_MODE
 
-@Client.on_message(filters.private & filters.command('set_caption'))
+@MainBot.on_message(filters.private & filters.command('set_caption'))
 async def add_caption(client, message):
     if RENAME_MODE == False:
         return 
@@ -15,7 +16,7 @@ async def add_caption(client, message):
     await message.reply_text("__**✅ 𝚈𝙾𝚄𝚁 𝙲𝙰𝙿𝚃𝙸𝙾𝙽 𝚂𝚄𝙲𝙲𝙴𝚂𝚂𝙵𝚄𝙻𝙻𝚈 𝚂𝙰𝚅𝙴𝙳**__")
 
     
-@Client.on_message(filters.private & filters.command('del_caption'))
+@MainBot.on_message(filters.private & filters.command('del_caption'))
 async def delete_caption(client, message):
     if RENAME_MODE == False:
         return 
@@ -25,7 +26,7 @@ async def delete_caption(client, message):
     await db.set_caption(message.from_user.id, caption=None)
     await message.reply_text("**Your Caption deleted successfully**✅️")
                                        
-@Client.on_message(filters.private & filters.command('see_caption'))
+@MainBot.on_message(filters.private & filters.command('see_caption'))
 async def see_caption(client, message):
     if RENAME_MODE == False:
         return 

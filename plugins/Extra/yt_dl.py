@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -13,7 +14,7 @@ from youtube_search import YoutubeSearch
 from youtubesearchpython import SearchVideos
 from yt_dlp import YoutubeDL
 
-@Client.on_message(filters.command(['song', 'mp3']) & filters.private)
+@MainBot.on_message(filters.command(['song', 'mp3']) & filters.private)
 async def song(client, message):
     user_id = message.from_user.id 
     user_name = message.from_user.first_name 
@@ -95,7 +96,7 @@ def get_text(message: Message) -> [None,str]:
         return None
 
 
-@Client.on_message(filters.command(["video", "mp4"]))
+@MainBot.on_message(filters.command(["video", "mp4"]))
 async def vsong(client, message: Message):
     urlissed = get_text(message)
     if not urlissed:

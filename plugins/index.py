@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 lock = asyncio.Lock()
 
-@Client.on_callback_query(filters.regex(r'^index'))
+@MainBot.on_callback_query(filters.regex(r'^index'))
 async def index_files(bot, query):
     if query.data.startswith('index_cancel'):
         temp.CANCEL = True
@@ -55,7 +56,7 @@ async def index_files(bot, query):
     await index_files_to_db(int(lst_msg_id), chat, msg, bot)
 
 
-@Client.on_message(filters.private & filters.command('index'))
+@MainBot.on_message(filters.private & filters.command('index'))
 async def send_for_index(bot, message):
     vj = await bot.ask(message.chat.id, "**Now Send Me Your Channel Last Post Link Or Forward A Last Message From Your Index Channel.\n\nAnd You Can Set Skip Number By - /setskip yourskipnumber**")
     if vj.forward_from_chat and vj.forward_from_chat.type == enums.ChatType.CHANNEL:
@@ -121,7 +122,7 @@ async def send_for_index(bot, message):
     await message.reply('ThankYou For the Contribution, Wait For My Moderators to verify the files.')
 
 
-@Client.on_message(filters.command('setskip') & filters.user(ADMINS))
+@MainBot.on_message(filters.command('setskip') & filters.user(ADMINS))
 async def set_skip_number(bot, message):
     if ' ' in message.text:
         _, skip = message.text.split(" ")

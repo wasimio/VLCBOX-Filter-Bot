@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -10,7 +11,7 @@ from info import CHNL_LNK
 from pyrogram import Client, filters
 
 
-@Client.on_message(filters.command('repo'))
+@MainBot.on_message(filters.command('repo'))
 async def git(bot, message):
     pablo = await message.reply_text("`Processing...`")
     args = message.text.split(None, 1)[1]

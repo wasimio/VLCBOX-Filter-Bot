@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -8,7 +9,7 @@ from urllib.parse import quote
 from info import CHNL_LNK
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-@Client.on_message(filters.command(["share_text", "share", "sharetext"]))
+@MainBot.on_message(filters.command(["share_text", "share", "sharetext"]))
 async def share_text(client, message):
     vj = await client.ask(chat_id = message.from_user.id, text = "Now Send me your text.")
     if vj and (vj.text or vj.caption):

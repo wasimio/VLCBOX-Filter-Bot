@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -10,7 +11,7 @@ import os
 
 API = "https://apis.xditya.me/lyrics?song="
 
-@Client.on_message(filters.text & filters.command(["lyrics"]))
+@MainBot.on_message(filters.text & filters.command(["lyrics"]))
 async def sng(bot, message):
     vj = await bot.ask(chat_id=message.from_user.id, text="Now send me your song name.")
     if vj.text:

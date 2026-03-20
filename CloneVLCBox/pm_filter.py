@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import CloneBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -28,13 +29,13 @@ BUTTONS1 = {}
 BUTTONS2 = {}
 SPELL_CHECK = {}
 
-@Client.on_message(filters.group & filters.text & filters.incoming)
+@CloneBot.on_message(filters.group & filters.text & filters.incoming)
 async def give_filter(client, message):
     ai_search = True
     reply_msg = await message.reply_text(f"<b><i>Searching For {message.text} 🔍</i></b>")
     await auto_filter(client, message.text, message, reply_msg, ai_search)
             
-@Client.on_message(filters.private & filters.text & filters.incoming)
+@CloneBot.on_message(filters.private & filters.text & filters.incoming)
 async def pm_text(bot, message):
     content = message.text
     user = message.from_user.first_name
@@ -44,7 +45,7 @@ async def pm_text(bot, message):
     reply_msg = await bot.send_message(message.from_user.id, f"<b><i>Searching For {content} 🔍</i></b>", reply_to_message_id=message.id)
     await auto_filter(bot, content, message, reply_msg, ai_search)
     
-@Client.on_callback_query(filters.regex(r"^next"))
+@CloneBot.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
     ident, req, key, offset = query.data.split("_")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -118,7 +119,7 @@ async def next_page(bot, query):
         pass
     await query.answer()
 
-@Client.on_callback_query(filters.regex(r"^spol"))
+@CloneBot.on_callback_query(filters.regex(r"^spol"))
 async def advantage_spoll_choker(bot, query):
     _, user, movie_ = query.data.split('#')
     movies = SPELL_CHECK.get(query.message.reply_to_message.id)
@@ -146,7 +147,7 @@ async def advantage_spoll_choker(bot, query):
         await k.delete()
 
 # Year 
-@Client.on_callback_query(filters.regex(r"^years#"))
+@CloneBot.on_callback_query(filters.regex(r"^years#"))
 async def years_cb_handler(client: Client, query: CallbackQuery):
 
     try:
@@ -188,7 +189,7 @@ async def years_cb_handler(client: Client, query: CallbackQuery):
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
     
 
-@Client.on_callback_query(filters.regex(r"^fy#"))
+@CloneBot.on_callback_query(filters.regex(r"^fy#"))
 async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -258,7 +259,7 @@ async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
 
 # Episode
 
-@Client.on_callback_query(filters.regex(r"^episodes#"))
+@CloneBot.on_callback_query(filters.regex(r"^episodes#"))
 async def episodes_cb_handler(client: Client, query: CallbackQuery):
 
     try:
@@ -300,7 +301,7 @@ async def episodes_cb_handler(client: Client, query: CallbackQuery):
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
     
 
-@Client.on_callback_query(filters.regex(r"^fe#"))
+@CloneBot.on_callback_query(filters.regex(r"^fe#"))
 async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -372,7 +373,7 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
 
 #languages
 
-@Client.on_callback_query(filters.regex(r"^languages#"))
+@CloneBot.on_callback_query(filters.regex(r"^languages#"))
 async def languages_cb_handler(client: Client, query: CallbackQuery):
 
     try:
@@ -414,7 +415,7 @@ async def languages_cb_handler(client: Client, query: CallbackQuery):
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
     
 
-@Client.on_callback_query(filters.regex(r"^fl#"))
+@CloneBot.on_callback_query(filters.regex(r"^fl#"))
 async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -482,7 +483,7 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
         pass
     await query.answer()    
     
-@Client.on_callback_query(filters.regex(r"^seasons#"))
+@CloneBot.on_callback_query(filters.regex(r"^seasons#"))
 async def seasons_cb_handler(client: Client, query: CallbackQuery):
 
     try:
@@ -526,7 +527,7 @@ async def seasons_cb_handler(client: Client, query: CallbackQuery):
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
 
 
-@Client.on_callback_query(filters.regex(r"^fs#"))
+@CloneBot.on_callback_query(filters.regex(r"^fs#"))
 async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
     _, seas, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -621,7 +622,7 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
         pass
     await query.answer()
 
-@Client.on_callback_query(filters.regex(r"^qualities#"))
+@CloneBot.on_callback_query(filters.regex(r"^qualities#"))
 async def qualities_cb_handler(client: Client, query: CallbackQuery):
 
     try:
@@ -663,7 +664,7 @@ async def qualities_cb_handler(client: Client, query: CallbackQuery):
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
     
 
-@Client.on_callback_query(filters.regex(r"^fl#"))
+@CloneBot.on_callback_query(filters.regex(r"^fl#"))
 async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
     _, qual, key = query.data.split("#")
     search = FRESH.get(key)
@@ -732,7 +733,7 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
     await query.answer()
 
                 
-@Client.on_callback_query()
+@CloneBot.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
     me = await client.get_me()
     settings = await db.get_bot(me.id)

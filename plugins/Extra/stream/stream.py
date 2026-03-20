@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -11,7 +12,7 @@ from VLCBox.util.human_readable import humanbytes
 import humanize
 import random
 
-@Client.on_message(filters.private & filters.command("stream"))
+@MainBot.on_message(filters.private & filters.command("stream"))
 async def stream_start(client, message):
     if STREAM_MODE == False:
         return 

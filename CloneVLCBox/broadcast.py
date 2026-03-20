@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import CloneBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -10,7 +11,7 @@ from database.users_chats_db import db
 from pyrogram.errors import *
 from CloneVLCBox.database.clone_bot_userdb import clonedb
         
-@Client.on_message(filters.command("broadcast"))
+@CloneBot.on_message(filters.command("broadcast"))
 async def pm_broadcast(bot, message):
     me = await bot.get_me()
     owner = await db.get_bot(me.id)

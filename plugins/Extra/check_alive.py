@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -8,12 +9,12 @@ from pyrogram import Client, filters
 
 CMD = ["/", "."]
 
-@Client.on_message(filters.command("alive", CMD))
+@MainBot.on_message(filters.command("alive", CMD))
 async def check_alive(_, message):
     await message.reply_text("**You are very lucky 🤞 I am alive ❤️ Press /start to use me**")
 
 
-@Client.on_message(filters.command("ping", CMD))
+@MainBot.on_message(filters.command("ping", CMD))
 async def ping(_, message):
     start_t = time.time()
     rm = await message.reply_text("...")

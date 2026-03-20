@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -39,7 +40,7 @@ async def p_paste(message, extension=None):
 
 
 
-@Client.on_message(filters.command(["tgpaste", "pasty", "paste"]))
+@MainBot.on_message(filters.command(["tgpaste", "pasty", "paste"]))
 async def pasty(client, message):
     pablo = await message.reply_text("`Please wait...`")
     tex_t = message.text

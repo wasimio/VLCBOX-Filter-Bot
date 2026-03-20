@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit Tg - @vlcbox
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -8,10 +9,11 @@ import re
 from Script import script
 from info import API_ID, API_HASH, CLONE_MODE, LOG_CHANNEL
 from pyrogram import Client, filters, enums
+from VLCBox.util.base_clients import CloneBot
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from database.users_chats_db import db
 
-@Client.on_message(filters.command('clone'))
+@MainBot.on_message(filters.command('clone'))
 async def clone_menu(client, message):
     if CLONE_MODE == False:
         return
@@ -33,7 +35,7 @@ async def clone_menu(client, message):
     user_id = message.from_user.id
     msg = await message.reply_text("**👨‍💻 ᴡᴀɪᴛ ᴀ ᴍɪɴᴜᴛᴇ ɪ ᴀᴍ ᴄʀᴇᴀᴛɪɴɢ ʏᴏᴜʀ ʙᴏᴛ ❣️**")
     try:
-        vj = Client(
+        vj = CloneBot(
             f"{bot_token}", API_ID, API_HASH,
             bot_token=bot_token,
             plugins={"root": "CloneVLCBox"}
@@ -45,7 +47,7 @@ async def clone_menu(client, message):
     except BaseException as e:
         await msg.edit_text(f"⚠️ <b>Bot Error:</b>\n\n<code>{e}</code>\n\n**Kindly forward this message to @rickakhtar to get assistance.**")
 
-@Client.on_message(filters.command('deleteclone'))
+@MainBot.on_message(filters.command('deleteclone'))
 async def delete_clone_menu(client, message):
     if CLONE_MODE == False:
         return
@@ -63,7 +65,7 @@ async def restart_bots():
         if bot_token == BOT_TOKEN:
             continue
         try:
-            vj = Client(
+            vj = CloneBot(
                 f"{bot_token}", API_ID, API_HASH,
                 bot_token=bot_token,
                 plugins={"root": "CloneVLCBox"},

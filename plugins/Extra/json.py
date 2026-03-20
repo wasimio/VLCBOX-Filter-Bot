@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -6,7 +7,7 @@ import os
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 
-@Client.on_message(filters.command(["json", 'js']))
+@MainBot.on_message(filters.command(["json", 'js']))
 async def jsonify(_, message):
     the_real_message = None
     reply_to_id = None
@@ -32,7 +33,7 @@ async def jsonify(_, message):
         os.remove("json.text")
 
 
-@Client.on_message(filters.command("written"))
+@MainBot.on_message(filters.command("written"))
 async def create_file(c, message):
     content = message.reply_to_message.text
     file_name = message.text.split(" ", 1)[1]   

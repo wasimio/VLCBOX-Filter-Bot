@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -6,7 +7,7 @@ from pyrogram import Client, filters, enums
 from database.users_chats_db import db
 from info import RENAME_MODE
 
-@Client.on_message(filters.private & filters.command(['view_thumb']))
+@MainBot.on_message(filters.private & filters.command(['view_thumb']))
 async def viewthumb(client, message):
     if RENAME_MODE == False:
         return 
@@ -16,14 +17,14 @@ async def viewthumb(client, message):
     else:
         await message.reply_text("😔 **Sorry! No thumbnail found...** 😔") 
 
-@Client.on_message(filters.private & filters.command(['del_thumb']))
+@MainBot.on_message(filters.private & filters.command(['del_thumb']))
 async def removethumb(client, message):
     if RENAME_MODE == False:
         return 
     await db.set_thumbnail(message.from_user.id, file_id=None)
     await message.reply_text("**Thumbnail deleted successfully ✅️**")
 
-@Client.on_message(filters.private & filters.command(['set_thumb']))
+@MainBot.on_message(filters.private & filters.command(['set_thumb']))
 async def addthumbs(client, message):
     if RENAME_MODE == False:
         return 

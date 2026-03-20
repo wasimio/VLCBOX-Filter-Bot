@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -15,7 +16,7 @@ def aesthetify(string):
         yield chr(c)
 
 
-@Client.on_message(filters.command(["ae"]))
+@MainBot.on_message(filters.command(["ae"]))
 async def aesthetic(client, message):
     status_message = await message.reply_text("...")
     text = "".join(str(e) for e in message.command[1:])
@@ -27,7 +28,7 @@ DART_E_MOJI = "🎯"
 # EMOJI CONSTANTS
 
 
-@Client.on_message(filters.command(["throw", "dart"]))
+@MainBot.on_message(filters.command(["throw", "dart"]))
 async def throw_dart(client, message):
     """ /throw an @AnimatedDart """
     rep_mesg_id = message.message_id
@@ -45,7 +46,7 @@ DICE_E_MOJI = "🎲"
 # EMOJI CONSTANTS
 
 
-@Client.on_message(filters.command(["roll", "dice"]))
+@MainBot.on_message(filters.command(["roll", "dice"]))
 async def roll_dice(client, message):
     """ @RollADie """
     rep_mesg_id = message.message_id
@@ -62,7 +63,7 @@ async def roll_dice(client, message):
 TRY_YOUR_LUCK = "🎰"
 # EMOJI CONSTANTS
 
-@Client.on_message(filters.command(["luck", "cownd"]))
+@MainBot.on_message(filters.command(["luck", "cownd"]))
 async def luck_cownd(client, message):
     """ /luck an @animatedluck """
     rep_mesg_id = message.message_id
@@ -80,7 +81,7 @@ async def luck_cownd(client, message):
 GOAL_E_MOJI = "⚽"
 # EMOJI CONSTANTS
 
-@Client.on_message(filters.command(["goal", "shoot"]))
+@MainBot.on_message(filters.command(["goal", "shoot"]))
 async def roll_dice(client, message):
     """ @Goal """
     rep_mesg_id = message.message_id
@@ -132,7 +133,7 @@ RUN_STRINGS = (
 )
 
 
-@Client.on_message(filters.command("runs"))
+@MainBot.on_message(filters.command("runs"))
 async def runs(_, message):
     """ /runs strings """
     effective_string = random.choice(RUN_STRINGS)

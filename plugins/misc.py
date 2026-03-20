@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -13,7 +14,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQ
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
-@Client.on_message(filters.command('id'))
+@MainBot.on_message(filters.command('id'))
 async def showid(client, message):
     chat_type = message.chat.type
     if chat_type == enums.ChatType.PRIVATE:
@@ -57,7 +58,7 @@ async def showid(client, message):
             quote=True
         )
 
-@Client.on_message(filters.command(["info"]))
+@MainBot.on_message(filters.command(["info"]))
 async def who_is(client, message):
     # https://github.com/SpEcHiDe/PyroGramBot/blob/master/pyrobot/plugins/admemes/whois.py#L19
     status_message = await message.reply_text(
@@ -130,7 +131,7 @@ async def who_is(client, message):
         )
     await status_message.delete()
 
-@Client.on_message(filters.command(["imdb", 'search']))
+@MainBot.on_message(filters.command(["imdb", 'search']))
 async def imdb_search(client, message):
     if ' ' in message.text:
         k = await message.reply('Searching ImDB')
@@ -151,7 +152,7 @@ async def imdb_search(client, message):
     else:
         await message.reply('Give me a movie / series Name')
 
-@Client.on_callback_query(filters.regex('^imdb'))
+@MainBot.on_callback_query(filters.regex('^imdb'))
 async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     i, movie = quer_y.data.split('#')
     imdb = await get_poster(query=movie, id=True)

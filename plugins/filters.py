@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -17,7 +18,7 @@ from utils import get_file_id, parser, split_quotes
 from info import ADMINS
 
 
-@Client.on_message(filters.command(['filter', 'add']) & filters.incoming)
+@MainBot.on_message(filters.command(['filter', 'add']) & filters.incoming)
 async def addfilter(client, message):
     userid = message.from_user.id if message.from_user else None
     if not userid:
@@ -120,7 +121,7 @@ async def addfilter(client, message):
     )
 
 
-@Client.on_message(filters.command(['viewfilters', 'filters']) & filters.incoming)
+@MainBot.on_message(filters.command(['viewfilters', 'filters']) & filters.incoming)
 async def get_all(client, message):
     
     chat_type = message.chat.type
@@ -184,7 +185,7 @@ async def get_all(client, message):
         parse_mode=enums.ParseMode.MARKDOWN
     )
         
-@Client.on_message(filters.command('del') & filters.incoming)
+@MainBot.on_message(filters.command('del') & filters.incoming)
 async def deletefilter(client, message):
     userid = message.from_user.id if message.from_user else None
     if not userid:
@@ -235,7 +236,7 @@ async def deletefilter(client, message):
     await delete_filter(message, query, grp_id)
         
 
-@Client.on_message(filters.command('delall') & filters.incoming)
+@MainBot.on_message(filters.command('delall') & filters.incoming)
 async def delallconfirm(client, message):
     userid = message.from_user.id if message.from_user else None
     if not userid:

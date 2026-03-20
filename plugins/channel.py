@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -8,7 +9,7 @@ from database.ia_filterdb import save_file
 
 media_filter = filters.document | filters.video
 
-@Client.on_message(filters.chat(CHANNELS) & media_filter)
+@MainBot.on_message(filters.chat(CHANNELS) & media_filter)
 async def media(bot, message):
     media = getattr(message, message.media.value, None)
     media.caption = message.caption

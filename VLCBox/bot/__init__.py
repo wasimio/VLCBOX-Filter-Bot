@@ -3,13 +3,14 @@
 # Ask Doubt on telegram @rickakhtar
 
 from pyrogram import Client, types
+from VLCBox.util.base_clients import MainBot
 from info import *
 from utils import temp
 from typing import Union, Optional, AsyncGenerator
 from aiohttp import web
 
 
-class VLCBoxXBot(Client):
+class VLCBoxXBot(MainBot):
 
     def __init__(self):
         super().__init__(

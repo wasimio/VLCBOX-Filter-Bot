@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import CloneBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -17,7 +18,7 @@ from shortzy import Shortzy
 from utils import get_size, temp, get_seconds, get_clone_shortlink
 logger = logging.getLogger(__name__)
 
-@Client.on_message(filters.command("start") & filters.incoming)
+@CloneBot.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
     me = await client.get_me()
     cd = await db.get_bot(me.id)
@@ -182,7 +183,7 @@ async def start(client, message):
     await k.edit_text("<b>Your File/Video is successfully deleted!!!</b>")
     return   
   
-@Client.on_message(filters.command("settings") & filters.private)
+@CloneBot.on_message(filters.command("settings") & filters.private)
 async def settings(client, message):
     me = await client.get_me()
     owner = await db.get_bot(me.id)
@@ -214,7 +215,7 @@ async def settings(client, message):
     await db.update_bot(me.id, data)
     await message.reply("**Successfully Added All Settings**")
 
-@Client.on_message(filters.command("reset") & filters.private)
+@CloneBot.on_message(filters.command("reset") & filters.private)
 async def reset_settings(client, message):
     me = await client.get_me()
     owner = await db.get_bot(me.id)
@@ -232,7 +233,7 @@ async def reset_settings(client, message):
         await db.update_bot(me.id, data)
         await message.reply("**Successfully Reset All Settings To Default.**")
 
-@Client.on_message(filters.command("stats") & filters.private)
+@CloneBot.on_message(filters.command("stats") & filters.private)
 async def stats(client, message):
     me = await client.get_me()
     total_users = await clonedb.total_users_count(me.id)

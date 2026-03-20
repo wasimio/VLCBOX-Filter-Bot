@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -11,7 +12,7 @@ from info import RENAME_MODE
 import humanize
 import random
 
-@Client.on_message(filters.private & filters.command("rename"))
+@MainBot.on_message(filters.private & filters.command("rename"))
 async def rename_start(client, message):
     if RENAME_MODE == False:
         return 

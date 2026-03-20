@@ -1,3 +1,4 @@
+from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
@@ -21,7 +22,7 @@ def convert(text):
     return audio
 
 
-@Client.on_message(filters.command("tts"))
+@MainBot.on_message(filters.command("tts"))
 async def text_to_speech(bot, message: Message):
     vj = await bot.ask(chat_id = message.from_user.id, text = "Now send me your text.")
     if vj.text:
