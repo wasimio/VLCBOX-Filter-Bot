@@ -60,6 +60,8 @@ async def restart_bots():
     bots = await bots_cursor.to_list(None)
     for bot in bots:
         bot_token = bot['bot_token']
+        if bot_token == BOT_TOKEN:
+            continue
         try:
             vj = Client(
                 f"{bot_token}", API_ID, API_HASH,

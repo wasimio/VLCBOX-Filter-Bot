@@ -19,6 +19,8 @@ async def initialize_clients():
         return
     
     async def start_client(client_id, token):
+        if token == BOT_TOKEN:
+            return None
         try:
             print(f"Starting - Client {client_id}")
             if client_id == len(all_tokens):
@@ -39,6 +41,7 @@ async def initialize_clients():
             logging.error(f"Failed starting Client - {client_id} Error:", exc_info=True)
     
     clients = await asyncio.gather(*[start_client(i, token) for i, token in all_tokens.items()])
+    clients = [c for c in clients if c is not None]
     multi_clients.update(dict(clients))
     if len(multi_clients) != 1:
         MULTI_CLIENT = True
