@@ -470,6 +470,26 @@ async def start(client, message):
         files = temp.GETALL.get(file_id)
         if not files:
             return await message.reply('<b><i>No such file exist.</b></i>')
+        
+        user_id = message.from_user.id
+        is_premium = await db.has_premium_access(user_id)
+        if not is_premium:
+            if VERIFY and not await check_verification(client, user_id):
+                btn = [[
+                    InlineKeyboardButton("ᴠᴇʀɪғʏ", url=await get_token(client, user_id, f"https://telegram.me/{temp.U_NAME}?start="))
+                ],[
+                    InlineKeyboardButton("ʜᴏᴡ ᴛᴏ ᴠᴇʀɪғʏ", url=VERIFY_TUTORIAL)
+                ]]
+                text = "<b>ʜᴇʏ {} 👋,\n\nʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴠᴇʀɪғɪᴇᴅ ᴛᴏᴅᴀʏ, ᴘʟᴇᴀꜱᴇ ᴄʟɪᴄᴋ ᴏɴ ᴠᴇʀɪғʏ & ɢᴇᴛ ᴜɴʟɪᴍɪᴛᴇᴅ ᴀᴄᴄᴇꜱꜱ ғᴏʀ 6 ʜᴏᴜʀꜱ</b>"
+                if PREMIUM_AND_REFERAL_MODE == True:
+                    text += "<b>ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴅɪʀᴇᴄᴛ ғɪʟᴇꜱ ᴡɪᴛʜᴏᴜᴛ ᴀɴʏ ᴠᴇʀɪғɪᴄᴀᴛɪᴏɴꜱ ᴛʜᴇɴ ʙᴜʏ ʙᴏᴛ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ☺️\n\n💶 ꜱᴇɴᴅ /plan ᴛᴏ ʙᴜʏ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ</b>"
+                await message.reply_text(
+                    text=text.format(message.from_user.mention),
+                    protect_content=True,
+                    reply_markup=InlineKeyboardMarkup(btn)
+                )
+                return
+
         filesarr = []
         for file in files:
             file_id = file["file_id"]
@@ -484,25 +504,6 @@ async def start(client, message):
                     f_caption=f_caption
             if f_caption is None:
                 f_caption = f"@vlcbox {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1['file_name'].split()))}"
-            if not is_premium:
-                came_from_shortlink = pre in ('file', 'filep', 'allfiles', 'allfilesp')
-                if came_from_shortlink:
-                    VERIFIED[user_id] = time.time()
-                elif not await check_verification(client, user_id) and VERIFY == True:
-                    btn = [[
-                        InlineKeyboardButton("ᴠᴇʀɪғʏ", url=await get_token(client, user_id, f"https://telegram.me/{temp.U_NAME}?start="))
-                    ],[
-                        InlineKeyboardButton("ʜᴏᴡ ᴛᴏ ᴠᴇʀɪғʏ", url=VERIFY_TUTORIAL)
-                    ]]
-                    text = "<b>ʜᴇʏ {} 👋,\n\nʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴠᴇʀɪғɪᴇᴅ ᴛᴏᴅᴀʏ, ᴘʟᴇᴀꜱᴇ ᴄʟɪᴄᴋ ᴏɴ ᴠᴇʀɪғʏ & ɢᴇᴛ ᴜɴʟɪᴍɪᴛᴇᴅ ᴀᴄᴄᴇꜱꜱ ғᴏʀ 6 ʜᴏᴜʀꜱ</b>"
-                    if PREMIUM_AND_REFERAL_MODE == True:
-                        text += "<b>ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴅɪʀᴇᴄᴛ ғɪʟᴇꜱ ᴡɪᴛʜᴏᴜᴛ ᴀɴʏ ᴠᴇʀɪғɪᴄᴀᴛɪᴏɴꜱ ᴛʜᴇɴ ʙᴜʏ ʙᴏᴛ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ☺️\n\n💶 ꜱᴇɴᴅ /plan ᴛᴏ ʙᴜʏ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ</b>"
-                    await message.reply_text(
-                        text=text.format(message.from_user.mention),
-                        protect_content=True,
-                        reply_markup=InlineKeyboardMarkup(btn)
-                    )
-                    return
             if STREAM_MODE == True:
                 button = [[InlineKeyboardButton('sᴛʀᴇᴀᴍ ᴀɴᴅ ᴅᴏᴡɴʟᴏᴀᴅ', callback_data=f'generate_stream_link:{file_id}')]]
                 reply_markup=InlineKeyboardMarkup(button)
@@ -605,14 +606,7 @@ async def start(client, message):
     is_premium = await db.has_premium_access(user_id)
 
     if not is_premium:
-        # If the user arrived here via the shortlink redirect (pre='file' or 'filep'),
-        # they have already completed the shortlink flow — treat them as verified.
-        # Mark them verified for today so they don't keep getting blocked.
-        came_from_shortlink = pre in ('file', 'filep', 'allfiles', 'allfilesp')
-        if came_from_shortlink:
-            # Auto-mark as verified since they went through the shortlink already
-            VERIFIED[user_id] = time.time()
-        elif VERIFY and not await check_verification(client, user_id):
+        if VERIFY and not await check_verification(client, user_id):
             btn = [[
                 InlineKeyboardButton("ᴠᴇʀɪғʏ", url=await get_token(client, user_id, f"https://telegram.me/{temp.U_NAME}?start="))
             ],[
