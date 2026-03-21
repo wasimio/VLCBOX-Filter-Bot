@@ -43,7 +43,7 @@ async def answer(bot, query):
         await query.answer(
             results=[],
             cache_time=0,
-            switch_pm_text='You have to subscribe my channel to use the bot',
+            switch_pm_text=f"You have to subscribe my {'channels' if len(AUTH_CHANNEL) > 1 else 'channel'} to use the bot",
             switch_pm_parameter="subscribe"
         )
         return

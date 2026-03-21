@@ -40,7 +40,7 @@ REQUEST_TO_JOIN_MODE = bool(environ.get('REQUEST_TO_JOIN_MODE', False)) # Set Tr
 TRY_AGAIN_BTN = bool(environ.get('TRY_AGAIN_BTN', False)) # Set True Or False (This try again button is only for request to join fsub not for normal fsub)
 
 # This Is Force Subscribe Channel, also known as Auth Channel 
-auth_channel = environ.get('AUTH_CHANNEL', '-1002385908762') # give your force subscribe channel IDs here separated by space
+auth_channel = environ.get('AUTH_CHANNEL', '-1002385908762 -1002474220103') # give your force subscribe channel IDs here separated by space
 AUTH_CHANNEL = [int(ch) if id_pattern.search(ch) else ch for ch in auth_channel.split()] if auth_channel else []
 
 # This Channel Is For When User Request Any File Name With command or hashtag like - /request or #request
@@ -141,7 +141,7 @@ TUTORIAL = environ.get('TUTORIAL', '') # How Open Shortner Link Video Link , Cha
 CACHE_TIME = int(environ.get('CACHE_TIME', 1800))
 MAX_B_TN = environ.get("MAX_B_TN", "5")
 PORT = environ.get("PORT", "8080")
-MSG_ALRT = environ.get('MSG_ALRT', 'Hello My Dear Friends ❤️')
+MSG_ALRT = environ.get('MSG_ALRT', 'Hello my dear friends ❤️')
 CUSTOM_FILE_CAPTION = environ.get("CUSTOM_FILE_CAPTION", f"{script.CAPTION}")
 BATCH_FILE_CAPTION = environ.get("BATCH_FILE_CAPTION", CUSTOM_FILE_CAPTION)
 IMDB_TEMPLATE = environ.get("IMDB_TEMPLATE", f"{script.TMDB_TEMPLATE_TXT}")
@@ -172,7 +172,7 @@ if 'DYNO' in environ:
     ON_HEROKU = True
 else:
     ON_HEROKU = False
-URL = environ.get("URL", "https://vlcboxbot-0c7de88d108d.herokuapp.com/")
+URL = environ.get("URL", "https://vlc-6f5a1006e8cb.herokuapp.com/")
 
 
 # Rename Info : If True Then Bot Rename File Else Not

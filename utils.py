@@ -12,7 +12,7 @@ from pyrogram.errors import *
 from typing import Union
 from Script import script
 from datetime import datetime, date
-from typing import List
+from typing import List 
 from database.users_chats_db import db
 from database.join_reqs import JoinReqs
 from bs4 import BeautifulSoup
