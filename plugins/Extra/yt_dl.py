@@ -1,10 +1,10 @@
+from __future__ import unicode_literals
 from VLCBox.util.base_clients import MainBot
 # Don't Remove Credit @vlcbox
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
 
 
-from __future__ import unicode_literals
 
 import os, requests, asyncio, math, time, wget
 from pyrogram import filters, Client
