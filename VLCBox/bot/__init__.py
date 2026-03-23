@@ -2,7 +2,6 @@
 # Subscribe YouTube Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
 
-import pyromod
 from pyrogram import Client, types
 from VLCBox.util.base_clients import MainBot
 from info import *

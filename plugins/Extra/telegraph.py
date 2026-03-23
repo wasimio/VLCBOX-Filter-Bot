@@ -5,8 +5,7 @@ from VLCBox.util.base_clients import MainBot
 
 import os
 import requests
-import asyncio
-from pyrogram import Client, filters
+from pyrogram import Client, idle, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 
 def upload_image_requests(image_path):
@@ -30,17 +29,21 @@ def upload_image_requests(image_path):
 
 @MainBot.on_message(filters.command("telegraph") & filters.private)
 async def telegraph_upload(bot, update):
-    t_msg = await bot.ask(chat_id = update.from_user.id, text = "Now Send Me Your Photo Or Video Under 5MB To Get Media Link.")
-    if not t_msg.media:
-        return await update.reply_text("**Only Media Supported.**")
-    
+    replied = update.reply_to_message
+    if replied and replied.media:
+        t_msg = replied
+    elif update.media:
+        t_msg = update
+    else:
+        return await update.reply_text("**Pʟᴇᴀsᴇ Rᴇᴘʟʏ Tᴏ A Pʜᴏᴛᴏ Oʀ Vɪᴅᴇᴏ Uɴᴅᴇʀ 5MB Tᴏ Gᴇᴛ Tᴇʟᴇɢʀᴀᴘʜ Lɪɴᴋ.**")
+
     # Check file size (5MB limit)
     file_size = getattr(t_msg.photo or t_msg.video or t_msg.document or t_msg.sticker or t_msg.animation, "file_size", 0)
     if file_size > 5242880: # 5MB in bytes
         return await update.reply_text("**File size exceeds 5MB limit. Please send a smaller file.**")
 
-    path = await t_msg.download()
     uploading_message = await update.reply_text("<b>ᴜᴘʟᴏᴀᴅɪɴɢ...</b>")
+    path = await t_msg.download()
     try:
         image_url = upload_image_requests(path)
         if not image_url:
