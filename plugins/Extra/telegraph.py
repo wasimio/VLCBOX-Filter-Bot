@@ -33,15 +33,26 @@ async def telegraph_upload(bot, update):
     t_msg = await bot.ask(chat_id = update.from_user.id, text = "Now Send Me Your Photo Or Video Under 5MB To Get Media Link.")
     if not t_msg.media:
         return await update.reply_text("**Only Media Supported.**")
+    
+    # Check file size (5MB limit)
+    file_size = getattr(t_msg.photo or t_msg.video or t_msg.document or t_msg.sticker or t_msg.animation, "file_size", 0)
+    if file_size > 5242880: # 5MB in bytes
+        return await update.reply_text("**File size exceeds 5MB limit. Please send a smaller file.**")
+
     path = await t_msg.download()
     uploading_message = await update.reply_text("<b>ᴜᴘʟᴏᴀᴅɪɴɢ...</b>")
     try:
         image_url = upload_image_requests(path)
         if not image_url:
-            return await uploading_message.edit_text("**Failed to upload file.**")
+            return await uploading_message.edit_text("**Failed to upload file. The server might be down or file type not supported.**")
     except Exception as error:
         await uploading_message.edit_text(f"**Upload failed: {error}**")
+        if os.path.exists(path):
+            os.remove(path)
         return
+    
+    if os.path.exists(path):
+        os.remove(path)
     await uploading_message.edit_text(
         text=f"<b>Link :-</b>\n\n<code>{image_url}</code>",
         disable_web_page_preview=True,

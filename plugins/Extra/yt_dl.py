@@ -26,19 +26,21 @@ async def song(client, message):
     m = await message.reply(f"**ѕєαrchíng чσur ѕσng...!\n {query}**")
     ydl_opts = {"format": "bestaudio[ext=m4a]"}
     try:
-        results = YoutubeSearch(query, max_results=1).to_dict()
-        if not results:
+        search = SearchVideos(query, offset=1, mode="dict", max_results=1)
+        results = search.result()
+        if not results or not results["search_result"]:
             return await m.edit("No results found. Try a different name.")
             
-        link = f"https://youtube.com{results[0]['url_suffix']}"
-        title = results[0]["title"][:40]       
-        thumbnail = results[0]["thumbnails"][0]
+        link = results["search_result"][0]["link"]
+        title = results["search_result"][0]["title"][:40]
+        vid_id = results["search_result"][0]["id"]
+        thumbnail = f"https://img.youtube.com/vi/{vid_id}/hqdefault.jpg"
         thumb_name = f'thumb_{user_id}.jpg'
         thumb = requests.get(thumbnail, allow_redirects=True)
         open(thumb_name, 'wb').write(thumb.content)
         performer = f"VLCBox" 
-        duration = results[0]["duration"]
-        views = results[0]["views"]
+        duration = results["search_result"][0]["duration"]
+        views = results["search_result"][0]["views"]
     except Exception as e:
         print(str(e))
         return await m.edit("Example: /song vaa vaathi song")
@@ -60,10 +62,14 @@ async def song(client, message):
             ydl.download([link])
 
         cap = f"**BY›› [VLCBOX]({CHNL_LNK})**"
-        secmul, dur, dur_arr = 1, 0, duration.split(':')
-        for i in range(len(dur_arr)-1, -1, -1):
-            dur += (int(dur_arr[i]) * secmul)
-            secmul *= 60
+        secmul, dur = 1, 0
+        if duration and ":" in str(duration):
+            dur_arr = str(duration).split(':')
+            for i in range(len(dur_arr)-1, -1, -1):
+                dur += (int(dur_arr[i]) * secmul)
+                secmul *= 60
+        else:
+            dur = 0
             
         await message.reply_audio(
             audio_file,
