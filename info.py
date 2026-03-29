@@ -13,7 +13,7 @@ id_pattern = re.compile(r'^.\d+$')
 SESSION = environ.get('SESSION', 'VLCBoxBot')
 API_ID = int(environ.get('API_ID', '15396205'))
 API_HASH = environ.get('API_HASH', '6b43ca35c89ae9d387f672b09593d47e')
-BOT_TOKEN = environ.get('BOT_TOKEN', "8532012562:AAEzLzUM_3gzmThRtr7UXASpuFX0YgFwPrs")
+BOT_TOKEN = environ.get('BOT_TOKEN', "")
 
 
 # This Pictures Is For Start Message Picture, You Can Add Multiple By Giving One Space Between Each.
