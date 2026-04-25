@@ -67,6 +67,7 @@ class Database:
         self.grp = self.db.groups
         self.users = self.db.uersz
         self.bot = self.db.clone_bots
+        self.verified_users = self.db.verified_users
 
 
     def new_user(self, id, name):
@@ -98,6 +99,30 @@ class Database:
     async def add_user(self, id, name):
         user = self.new_user(id, name)
         await self.col.insert_one(user)
+    
+    async def add_verified_user(self, user_id, username):
+        user_data = {
+            "user_id": user_id,
+            "username": username,
+            "is_verified": True,
+            "verified_at": datetime.datetime.now(),
+            "last_active": datetime.datetime.now()
+        }
+        await self.verified_users.update_one(
+            {"user_id": user_id},
+            {"$set": user_data},
+            upsert=True
+        )
+
+    async def update_last_active(self, user_id):
+        await self.verified_users.update_one(
+            {"user_id": user_id},
+            {"$set": {"last_active": datetime.datetime.now()}}
+        )
+
+    async def check_verified_user(self, user_id):
+        user = await self.verified_users.find_one({"user_id": user_id})
+        return bool(user and user.get("is_verified"))
     
     async def is_user_exist(self, id):
         user = await self.col.find_one({'id':int(id)})
