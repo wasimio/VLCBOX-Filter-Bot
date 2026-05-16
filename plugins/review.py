@@ -30,7 +30,7 @@ from pyrogram.types import (
 )
 from pyrogram.errors import UserIsBlocked, InputUserDeactivated, FloodWait
 
-from VLCBox.util.base_clients import MainBot
+from VLCBox.bot import VLCBoxBot
 from database.users_chats_db import db
 from database.review_db import review_db
 from info import ADMINS, LOG_CHANNEL
@@ -82,10 +82,23 @@ def _fmt_username(user) -> str:
     return name.strip() or "Unknown"
 
 
+# ─── Public: /review ──────────────────────────────────────────────────────────
+
+
+@VLCBoxBot.on_message(filters.command("review") & filters.private)
+async def cmd_public_review(client: Client, message: Message):
+    """Allows any user to rate the bot manually in PM."""
+    await message.reply_text(
+        REVIEW_REQUEST_TEXT,
+        reply_markup=build_star_keyboard(),
+        parse_mode=enums.ParseMode.HTML,
+    )
+
+
 # ─── Admin: /sendreview ───────────────────────────────────────────────────────
 
 
-@MainBot.on_message(filters.command("sendreview") & filters.user(ADMINS))
+@VLCBoxBot.on_message(filters.command("sendreview") & filters.user(ADMINS))
 async def cmd_send_review(client: Client, message: Message):
     """Admin command: send the review-request message here."""
     await message.reply_text(
@@ -98,7 +111,7 @@ async def cmd_send_review(client: Client, message: Message):
 # ─── Admin: /broadcastreview ──────────────────────────────────────────────────
 
 
-@MainBot.on_message(filters.command("broadcastreview") & filters.user(ADMINS))
+@VLCBoxBot.on_message(filters.command("broadcastreview") & filters.user(ADMINS))
 async def cmd_broadcast_review(client: Client, message: Message):
     """Admin command: broadcast the review-request message to ALL bot users."""
     sts = await message.reply_text(
@@ -165,7 +178,7 @@ async def cmd_broadcast_review(client: Client, message: Message):
 # ─── Admin: /reviewstats ──────────────────────────────────────────────────────
 
 
-@MainBot.on_message(filters.command("reviewstats") & filters.user(ADMINS))
+@VLCBoxBot.on_message(filters.command("reviewstats") & filters.user(ADMINS))
 async def cmd_review_stats(client: Client, message: Message):
     """Admin command: show rating distribution, average, and latest reviews."""
     loading = await message.reply_text("📊 <i>Fetching stats…</i>", parse_mode=enums.ParseMode.HTML)
@@ -229,7 +242,7 @@ async def cmd_review_stats(client: Client, message: Message):
 # ─── Callback: star rating button pressed ────────────────────────────────────
 
 
-@MainBot.on_callback_query(filters.regex(r"^rate_(\d)$"))
+@VLCBoxBot.on_callback_query(filters.regex(r"^rate_(\d)$"))
 async def cb_rate(client: Client, query: CallbackQuery):
     """Handle star rating button taps."""
     user = query.from_user
@@ -291,7 +304,7 @@ async def cb_rate(client: Client, query: CallbackQuery):
 # ─── Callback: user skips text review ────────────────────────────────────────
 
 
-@MainBot.on_callback_query(filters.regex(r"^review_skip$"))
+@VLCBoxBot.on_callback_query(filters.regex(r"^review_skip$"))
 async def cb_review_skip(client: Client, query: CallbackQuery):
     """User decided to skip the written review."""
     user = query.from_user
@@ -315,7 +328,7 @@ async def cb_review_skip(client: Client, query: CallbackQuery):
 # ─── Message handler: capture text review in PM ───────────────────────────────
 
 
-@MainBot.on_message(filters.private & filters.text & ~filters.command(["start", "help", "reviewstats", "sendreview", "broadcastreview", "skip"]), group=-1)
+@VLCBoxBot.on_message(filters.private & filters.text & ~filters.command(["start", "help", "reviewstats", "sendreview", "broadcastreview", "skip", "review"]), group=-1)
 async def handle_review_text(client: Client, message: Message):
     """Capture pending text reviews in PM."""
     user = message.from_user
