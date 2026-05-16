@@ -3,7 +3,7 @@ from VLCBox.util.base_clients import MainBot
 # Subscribe Telegram Channel For Amazing Bot @vlcbox
 # Ask Doubt on telegram @rickakhtar
 
-import os, string, logging, random, asyncio, time, datetime, re, sys, json, base64
+import os, string, logging, random, asyncio, time, datetime, re, sys, json, base64, traceback, importlib
 from Script import script
 from pyrogram import Client, filters, enums
 from pyrogram.errors import ChatAdminRequired, FloodWait
@@ -40,7 +40,7 @@ async def start(client, message):
             InlineKeyboardButton('ᴍᴏᴠɪᴇ ɢʀᴏᴜᴘ', url=GRP_LNK)
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await message.reply(script.START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, temp.U_NAME, temp.B_NAME) + "\n\n<i>[Debug: Rickakhtar Branch]</i>", reply_markup=reply_markup, disable_web_page_preview=True)
+        await message.reply(script.START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, temp.U_NAME, temp.B_NAME), reply_markup=reply_markup, disable_web_page_preview=True)
         await asyncio.sleep(2) # 😢 https://github.com/EvamariaTG/EvaMaria/blob/master/plugins/p_ttishow.py#L17 😬 wait a bit, before checking.
         if not await db.get_chat(message.chat.id):
             total=await client.get_chat_members_count(message.chat.id)
@@ -192,7 +192,7 @@ async def start(client, message):
             await m.delete()
             await message.reply_photo(
                 photo=random.choice(PICS),
-                caption=script.START_TXT.format(message.from_user.mention, temp.U_NAME, temp.B_NAME) + "\n\n<i>[Debug: Rickakhtar Branch]</i>",
+                caption=script.START_TXT.format(message.from_user.mention, temp.U_NAME, temp.B_NAME),
                 reply_markup=reply_markup,
                 parse_mode=enums.ParseMode.HTML
             )
@@ -566,7 +566,7 @@ async def start(client, message):
         files_ = await get_file_details(data)
 
     if not files_:
-        return await message.reply('<b><i>Nᴏ sᴜᴄʜ ғɪʟᴇ ᴇxɪsᴛ ᴏʀ link ᴇxᴘɪʀᴇᴅ. 🕵️\nPʟᴇᴀsᴇ ᴛʀʏ sᴇᴀʀᴄʜɪɴɢ ᴀɢᴀɪɴ ɪɴ ᴛʜᴇ ɢʀᴏᴜᴘ.</b></i>')
+        return await message.reply('<b><i>Nᴏ sᴜᴄᴄᴇss ғɪʟᴇ ᴇxɪsᴛ ᴏʀ link ᴇxᴘɪʀᴇᴅ. 🕵️\nPʟᴇᴀsᴇ ᴛʀʏ sᴇᴀʀᴄʜɪɴɢ ᴀɢᴀɪɴ ɪɴ ᴛʜᴇ ɢʀᴏᴜᴘ.</b></i>')
 
     files = files_
     title = files.get("file_name", "No Name")
@@ -667,6 +667,20 @@ async def channel_info(bot, message):
             f.write(text)
         await message.reply_document(file)
         os.remove(file)
+
+
+@MainBot.on_message(filters.command("debug_review"))
+async def debug_review_command(client, message):
+    try:
+        importlib.import_module("plugins.review")
+        await message.reply_text("✅ Successfully imported `plugins.review`!")
+    except Exception as e:
+        tb = traceback.format_exc()
+        await message.reply_text(f"❌ Failed to import `plugins.review`!\n\n**Error:** `{e}`\n\n**Traceback:**\n`{tb[-1000:]}`")
+
+@MainBot.on_message(filters.command("testreviewping"))
+async def cmd_test_review_ping(client, message):
+    await message.reply_text("✅ <b>Test ReviewPing from commands.py works!</b>", parse_mode=enums.ParseMode.HTML)
 
 
 @MainBot.on_message(filters.command('logs') & filters.user(ADMINS))
