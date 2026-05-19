@@ -172,7 +172,7 @@ if 'DYNO' in environ:
     ON_HEROKU = True
 else:
     ON_HEROKU = False
-URL = environ.get("URL", "https://vlcfilterbot-90835b1f7b7e.herokuapp.com/")
+URL = environ.get("URL", "https://rickfilterbot-b7ba9cb1b12d.herokuapp.com/")
 
 
 # Rename Info : If True Then Bot Rename File Else Not
