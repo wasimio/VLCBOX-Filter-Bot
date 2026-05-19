@@ -222,6 +222,7 @@ async def cb_rate(client: Client, query: CallbackQuery):
         reply_markup=keyboard,
         parse_mode=enums.ParseMode.HTML,
     )
+    raise StopPropagation
 
 
 @MainBot.on_callback_query(filters.regex(r"^review_skip$"))
@@ -252,6 +253,7 @@ async def cb_review_skip(client: Client, query: CallbackQuery):
         "Your rating has been saved. We appreciate your support!",
         parse_mode=enums.ParseMode.HTML,
     )
+    raise StopPropagation
 
 
 # Use group=-1 to ensure it runs before pm_filter's generic search (group 0)
