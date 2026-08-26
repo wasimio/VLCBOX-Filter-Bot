@@ -19,6 +19,7 @@ from database.connections_mdb import mydb, active_connection, all_connections, d
 from database.gfilters_mdb import find_gfilter, get_gfilters, del_allg
 from urllib.parse import quote_plus
 from VLCBox.util.file_properties import get_name, get_hash, get_media_file_size
+from VLCBox.util.ephemeral import send_group_search_result
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
@@ -1576,6 +1577,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
                                          callback_data=f'setgs#is_shortlink#{settings["is_shortlink"]}#{str(grp_id)}'),
                     InlineKeyboardButton('✔ Oɴ' if settings["is_shortlink"] else '✘ Oғғ',
                                          callback_data=f'setgs#is_shortlink#{settings["is_shortlink"]}#{str(grp_id)}')
+                ],
+                [
+                    InlineKeyboardButton('Pʀɪᴠᴀᴛᴇ Rᴇsᴜʟᴛs',
+                                         callback_data=f'setgs#private_results#{settings.get("private_results", False)}#{str(grp_id)}'),
+                    InlineKeyboardButton('✔ Oɴ' if settings.get("private_results", False) else '✘ Oғғ',
+                                         callback_data=f'setgs#private_results#{settings.get("private_results", False)}#{str(grp_id)}')
                 ]
             ]
             reply_markup = InlineKeyboardMarkup(buttons)
@@ -2468,6 +2475,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
                                          callback_data=f'setgs#is_shortlink#{settings["is_shortlink"]}#{str(grp_id)}'),
                     InlineKeyboardButton('✔ Oɴ' if settings["is_shortlink"] else '✘ Oғғ',
                                          callback_data=f'setgs#is_shortlink#{settings["is_shortlink"]}#{str(grp_id)}')
+                ],
+                [
+                    InlineKeyboardButton('Pʀɪᴠᴀᴛᴇ Rᴇsᴜʟᴛs',
+                                         callback_data=f'setgs#private_results#{settings.get("private_results", False)}#{str(grp_id)}'),
+                    InlineKeyboardButton('✔ Oɴ' if settings.get("private_results", False) else '✘ Oғғ',
+                                         callback_data=f'setgs#private_results#{settings.get("private_results", False)}#{str(grp_id)}')
                 ]
             ]
             reply_markup = InlineKeyboardMarkup(buttons)
@@ -2601,61 +2614,27 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
             for file in files:
                 cap += f"<b>📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{chat_id_str}_{file['file_id']}'>[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}\n\n</a></b>"
 
+    poster = None
     if imdb and imdb.get('poster'):
+        poster = imdb.get('poster')
+
+    result_msg = await send_group_search_result(
+        client=client,
+        message=message,
+        reply_msg=reply_msg,
+        text=cap,
+        photo=poster,
+        reply_markup=InlineKeyboardMarkup(btn),
+        settings=settings
+    )
+
+    if result_msg and hasattr(result_msg, "delete") and settings.get('auto_delete', False):
         try:
-            hehe = await message.reply_photo(photo=imdb.get('poster'), caption=cap, reply_markup=InlineKeyboardMarkup(btn))
-            await reply_msg.delete()
-            try:
-                if settings['auto_delete']:
-                    await asyncio.sleep(300)
-                    await hehe.delete()
-                    await message.delete()
-            except KeyError:
-                await save_group_settings(message.chat.id, 'auto_delete', True)
-                await asyncio.sleep(300)
-                await hehe.delete()
-                await message.delete()
-        except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
-            pic = imdb.get('poster')
-            poster = pic.replace('.jpg', "._V1_UX360.jpg") 
-            hmm = await message.reply_photo(photo=poster, caption=cap, reply_markup=InlineKeyboardMarkup(btn))
-            await reply_msg.delete()
-            try:
-               if settings['auto_delete']:
-                    await asyncio.sleep(300)
-                    await hmm.delete()
-                    await message.delete()
-            except KeyError:
-                await save_group_settings(message.chat.id, 'auto_delete', True)
-                await asyncio.sleep(300)
-                await hmm.delete()
-                await message.delete()
-        except Exception as e:
-            logger.exception(e) 
-            fek = await reply_msg.edit_text(text=cap, reply_markup=InlineKeyboardMarkup(btn))
-            try:
-                if settings['auto_delete']:
-                    await asyncio.sleep(300)
-                    await fek.delete()
-                    await message.delete()
-            except KeyError:
-                await save_group_settings(message.chat.id, 'auto_delete', True)
-                await asyncio.sleep(300)
-                await fek.delete()
-                await message.delete()
-    else:
-        fuk = await reply_msg.edit_text(text=cap, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True)
-        
-        try:
-            if settings['auto_delete']:
-                await asyncio.sleep(300)
-                await fuk.delete()
-                await message.delete()
-        except KeyError:
-            await save_group_settings(message.chat.id, 'auto_delete', True)
             await asyncio.sleep(300)
-            await fuk.delete()
+            await result_msg.delete()
             await message.delete()
+        except Exception:
+            pass
 
 async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     mv_id = msg.id

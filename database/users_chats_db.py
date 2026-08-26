@@ -54,7 +54,8 @@ default_setgs = {
     'fsub': None,
     'tutorial': TUTORIAL,
     'is_tutorial': IS_TUTORIAL,
-    'tmdb': TMDB
+    'tmdb': TMDB,
+    'private_results': False
 }
 
 
@@ -233,8 +234,11 @@ class Database:
     async def get_settings(self, id):
         chat = await self.grp.find_one({'id':int(id)})
         if chat:
-            return chat.get('settings', default_setgs)
-        return default_setgs
+            saved = chat.get('settings', {})
+            res = default_setgs.copy()
+            res.update(saved)
+            return res
+        return default_setgs.copy()
     
 
     async def disable_chat(self, chat, reason="No Reason"):

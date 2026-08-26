@@ -91,23 +91,10 @@ async def send_ephemeral(
 ) -> Dict[str, Any]:
     """
     Send an ephemeral / private message to a specific user inside a group or supergroup.
-
-    Parameters:
-        client: Pyrogram Client instance
-        chat_id: Target group or supergroup chat ID (int or str)
-        user_id: Target recipient user ID (int)
-        text: Message text
-        reply_markup: Optional inline keyboard or reply keyboard
-        parse_mode: HTML / Markdown (default: HTML)
-        disable_web_page_preview: Whether to disable link previews (default: True)
-        fallback_on_error: Whether to send a standard group message if ephemeral delivery fails (default: True)
-
-    Returns:
-        Dict with keys: success (bool), ephemeral (bool), fallback_sent (bool), error (Optional[str]), result (Optional[Dict])
     """
     # 1. Check Feature Flag
     if not EPHEMERAL_GROUP_MESSAGES:
-        logger.info(f"EPHEMERAL: unsupported - feature flag EPHEMERAL_GROUP_MESSAGES is disabled")
+        logger.info("EPHEMERAL: unsupported - feature flag EPHEMERAL_GROUP_MESSAGES is disabled")
         if fallback_on_error and client:
             try:
                 sent = await client.send_message(
@@ -246,3 +233,156 @@ async def send_ephemeral(
             except Exception as e_fb:
                 return {"success": False, "ephemeral": False, "fallback_sent": False, "error": str(e_fb)}
         return {"success": False, "ephemeral": False, "fallback_sent": False, "error": str(e)}
+
+
+async def send_ephemeral_photo(
+    client: Any,
+    chat_id: Union[int, str],
+    user_id: int,
+    photo: str,
+    caption: str,
+    reply_markup: Optional[Union[InlineKeyboardMarkup, ReplyKeyboardMarkup, Dict[str, Any]]] = None,
+    parse_mode: str = "HTML"
+) -> Dict[str, Any]:
+    """
+    Send an ephemeral photo with caption to a specific user inside a group or supergroup.
+    If sendPhoto fails, attempts fallback to ephemeral text.
+    """
+    token = get_active_bot_token(client)
+    if not token:
+        return await send_ephemeral(client, chat_id, user_id, caption, reply_markup, parse_mode, fallback_on_error=False)
+
+    api_url = f"https://api.telegram.org/bot{token}/sendPhoto"
+    payload: Dict[str, Any] = {
+        "chat_id": chat_id,
+        "photo": photo,
+        "caption": caption,
+        "parse_mode": parse_mode,
+        "ephemeral_message_parameters": {
+            "receiver_user_id": int(user_id)
+        }
+    }
+
+    serialized_markup = serialize_reply_markup(reply_markup)
+    if serialized_markup:
+        payload["reply_markup"] = serialized_markup
+
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            async with session.post(api_url, json=payload) as resp:
+                data = await resp.json()
+                if data.get("ok"):
+                    logger.info(f"EPHEMERAL: photo success - chat_id={chat_id}, user_id={user_id}")
+                    return {"success": True, "ephemeral": True, "result": data.get("result")}
+                else:
+                    error_desc = data.get("description", "Unknown Telegram API Error")
+                    logger.warning(f"EPHEMERAL: sendPhoto API error - {error_desc}, falling back to ephemeral text")
+                    return await send_ephemeral(
+                        client=client,
+                        chat_id=chat_id,
+                        user_id=user_id,
+                        text=caption,
+                        reply_markup=reply_markup,
+                        parse_mode=parse_mode,
+                        fallback_on_error=False
+                    )
+    except Exception as e:
+        logger.warning(f"EPHEMERAL: sendPhoto network error - {e}, falling back to ephemeral text")
+        return await send_ephemeral(
+            client=client,
+            chat_id=chat_id,
+            user_id=user_id,
+            text=caption,
+            reply_markup=reply_markup,
+            parse_mode=parse_mode,
+            fallback_on_error=False
+        )
+
+
+async def send_group_search_result(
+    client: Any,
+    message: Any,
+    reply_msg: Any,
+    text: str,
+    photo: Optional[str] = None,
+    reply_markup: Optional[Union[InlineKeyboardMarkup, ReplyKeyboardMarkup]] = None,
+    settings: Optional[Dict[str, Any]] = None
+) -> Any:
+    """
+    Unified movie search delivery abstraction.
+
+    Decides whether to deliver as an Ephemeral result (visible only to requesting user)
+    or standard Public result based on global feature flag and per-group setting.
+
+    Ensures exactly ONE result message is delivered (no duplicates) and provides safe fallback.
+    """
+    chat_id = message.chat.id
+    user_id = message.from_user.id if message.from_user else 0
+    is_group = message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]
+    private_results_enabled = bool(settings and settings.get("private_results", False))
+
+    # Check if Ephemeral delivery should be used
+    if EPHEMERAL_GROUP_MESSAGES and is_group and private_results_enabled and user_id != 0:
+        logger.info(f"EPHEMERAL_SEARCH: attempt - chat_id={chat_id}, user_id={user_id}")
+
+        ephemeral_res = None
+        if photo:
+            ephemeral_res = await send_ephemeral_photo(
+                client=client,
+                chat_id=chat_id,
+                user_id=user_id,
+                photo=photo,
+                caption=text,
+                reply_markup=reply_markup,
+                parse_mode="HTML"
+            )
+        else:
+            ephemeral_res = await send_ephemeral(
+                client=client,
+                chat_id=chat_id,
+                user_id=user_id,
+                text=text,
+                reply_markup=reply_markup,
+                parse_mode="HTML",
+                fallback_on_error=False
+            )
+
+        if ephemeral_res and ephemeral_res.get("success"):
+            logger.info(f"EPHEMERAL_SEARCH: success - chat_id={chat_id}, user_id={user_id}")
+            # Clean up the public "Searching For..." placeholder
+            if reply_msg:
+                try:
+                    await reply_msg.delete()
+                except Exception:
+                    pass
+            return ephemeral_res.get("result")
+
+        # Ephemeral delivery failed -> Log and fall back to public delivery
+        err_msg = ephemeral_res.get("error", "Unknown error") if ephemeral_res else "No response"
+        logger.warning(f"EPHEMERAL_SEARCH: fallback - chat_id={chat_id}, user_id={user_id}, reason: {err_msg}")
+
+    # Standard Public Delivery (Fallback or default)
+    if photo:
+        try:
+            res = await message.reply_photo(photo=photo, caption=text, reply_markup=reply_markup)
+            if reply_msg:
+                try:
+                    await reply_msg.delete()
+                except Exception:
+                    pass
+            return res
+        except Exception as e:
+            logger.warning(f"EPHEMERAL_SEARCH: public photo send failed ({e}), falling back to text")
+            if reply_msg:
+                try:
+                    return await reply_msg.edit_text(text=text, reply_markup=reply_markup, disable_web_page_preview=True)
+                except Exception:
+                    pass
+            return await message.reply_text(text=text, reply_markup=reply_markup, disable_web_page_preview=True)
+    else:
+        if reply_msg:
+            try:
+                return await reply_msg.edit_text(text=text, reply_markup=reply_markup, disable_web_page_preview=True)
+            except Exception:
+                pass
+        return await message.reply_text(text=text, reply_markup=reply_markup, disable_web_page_preview=True)
