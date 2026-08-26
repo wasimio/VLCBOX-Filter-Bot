@@ -1,34 +1,47 @@
 <!--  Don't Remove Credit @vlcbox Subscribe Telegram Channel For Amazing Bot @vlcbox Ask Doubt on telegram @rickakhtar -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ file_name }} | VLCBox Stream</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>{{ file_name }} | VLCBox Player</title>
     <link rel="shortcut icon" href="https://i.ibb.co/qJyZWCv/20230629-081948-0000.png" type="image/x-icon">
     
     <!-- Premium Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Frameworks -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Plyr Video Player CSS -->
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Outfit', 'sans-serif'],
+                    },
                     colors: {
-                        primary: '#6366f1',
-                        secondary: '#a855f7',
-                        accent: '#ec4899',
-                        dark: '#020617',
-                        vlc: '#ff8800',
-                        mx: '#00ccff',
-                        playit: '#22abbd'
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            vlc: '#ff8800',
+                            mx: '#00ccff',
+                        },
+                        dark: {
+                            bg: '#090d16',
+                            card: '#111726',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            hover: '#192238'
+                        }
                     }
                 }
             }
@@ -36,187 +49,472 @@
     </script>
 
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #020617; }
-        .glass { 
-            background: rgba(255, 255, 255, 0.02); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255, 255, 255, 0.05); 
+        :root {
+            --plyr-color-main: #6366f1;
+            --plyr-video-control-color: #f8fafc;
+            --plyr-video-control-color-hover: #ffffff;
+            --plyr-control-radius: 8px;
         }
-        .mesh-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            background: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-                        radial-gradient(circle at 100% 100%, rgba(236, 72, 153, 0.08) 0%, transparent 50%);
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #090d16;
+            color: #f1f5f9;
+            overflow-x: hidden;
         }
-        .player-container {
-            box-shadow: 0 0 50px rgba(99, 102, 241, 0.15);
-            border: 1px solid rgba(99, 102, 241, 0.2);
+
+        h1, h2, h3, .font-heading {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Subtle mesh background */
+        .ambient-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 10%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.5) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        /* Custom Card & Glass styles */
+        .vlc-card {
+            background: #111726;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+        }
+
+        .vlc-card-interactive {
+            background: #111726;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .vlc-card-interactive:hover {
+            background: #192238;
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .vlc-card-interactive:active {
+            transform: translateY(0);
+        }
+
+        /* Player styling */
+        .player-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000000;
             border-radius: 20px;
             overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8), 0 0 30px -10px rgba(99, 102, 241, 0.15);
         }
-        .plyr--full-ui.plyr--video .plyr__control--overlaid { background: #6366f1; }
-        .plyr--video .plyr__controls { background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.7)); }
-        
-        .external-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+
+        .plyr {
+            height: 100%;
+            width: 100%;
+            border-radius: 20px;
+        }
+
+        .plyr--full-ui.plyr--video .plyr__control--overlaid {
+            background: rgba(99, 102, 241, 0.9);
+            padding: 18px;
+            border-radius: 50%;
+            backdrop-filter: blur(8px);
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s;
+        }
+
+        .plyr--full-ui.plyr--video .plyr__control--overlaid:hover {
+            background: #6366f1;
+            transform: scale(1.1);
+        }
+
+        .plyr__controls {
+            background: linear-gradient(0deg, rgba(9, 13, 22, 0.95) 0%, rgba(9, 13, 22, 0.4) 70%, transparent 100%) !important;
+            padding: 20px 16px 12px 16px !important;
+        }
+
+        /* Toast animation */
+        #toast {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(100px);
+            opacity: 0;
+            pointer-events: none;
         }
-        .external-btn:hover {
-            background: rgba(255, 255, 255, 0.07);
-            transform: translateY(-3px);
-            border-color: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-        }
-        .btn-pulse {
-            animation: pulse-glow 2s infinite;
-        }
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+
+        #toast.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
         }
     </style>
 </head>
-<body class="text-slate-200 min-h-screen selection:bg-primary/30">
-    <div class="mesh-bg"></div>
-    
-    <!-- Navbar -->
-    <header class="w-full px-8 py-6 flex justify-between items-center z-50 backdrop-blur-md sticky top-0 border-b border-white/5">
-        <a href="https://t.me/vlcbox" class="flex items-center gap-3">
-            <img src="https://i.ibb.co/356f2g1J/photo-2026-02-12-22-08-21.jpg" class="w-10 h-10 rounded-xl shadow-lg" alt="VLCBox">
-            <span class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">VLCBox Stream</span>
-        </a>
-        <div class="flex items-center gap-4">
-            <a href="https://telegram.me/rickakhtar" class="hidden sm:block text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-white transition-colors">Developer</a>
-            <a href="https://telegram.me/vlcbox" class="bg-primary px-5 py-2 rounded-full text-xs font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all">Updates</a>
+<body class="min-h-screen flex flex-col selection:bg-brand-500/30 selection:text-white">
+    <div class="ambient-bg"></div>
+
+    <!-- Header Navigation -->
+    <header class="w-full border-b border-white/5 bg-dark-bg/80 backdrop-blur-xl sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="https://t.me/vlcbox" class="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-brand-500/50 rounded-lg p-1">
+                <div class="relative w-9 h-9 rounded-xl overflow-hidden shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <img src="https://i.ibb.co/356f2g1J/photo-2026-02-12-22-08-21.jpg" alt="VLCBox Logo" class="w-full h-full object-cover">
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="font-heading text-lg font-bold tracking-tight text-white group-hover:text-brand-500 transition-colors">VLCBox</span>
+                    <span class="hidden sm:inline-block text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-500 border border-brand-500/20">Player</span>
+                </div>
+            </a>
+
+            <!-- Right Actions -->
+            <div class="flex items-center gap-3">
+                <a href="https://telegram.me/rickakhtar" target="_blank" rel="noopener" class="hidden md:flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    Support
+                </a>
+                <a href="https://telegram.me/vlcbox" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 active:scale-95 transition-all">
+                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                    <span>Updates</span>
+                </a>
+            </div>
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-6 py-10">
-        <!-- Title & Info -->
-        <div class="mb-10 text-center md:text-left">
-            <h1 class="text-2xl md:text-3xl font-bold mb-4 leading-tight tracking-tight text-white" id="myDiv">
-                {{ file_name }}
-            </h1>
-            <div class="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                <span class="px-3 py-1 glass rounded-lg text-xs font-bold text-slate-400 uppercase tracking-widest tracking-widest border border-white/10">Ultra HD</span>
-                <span class="px-3 py-1 glass rounded-lg text-xs font-bold text-slate-400 uppercase tracking-widest border border-white/10">Fast Streaming</span>
-                <div class="flex items-center gap-2 text-xs text-green-500 font-bold">
-                    <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></span>
-                    Live Server
+    <!-- Main Container -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 md:py-8 space-y-6">
+        
+        <!-- Video Player Section -->
+        <section class="space-y-3">
+            <div class="player-wrapper group">
+                <video id="player" class="player" playsinline controls data-poster="https://i.ibb.co/356f2g1J/photo-2026-02-12-22-08-21.jpg" aria-label="{{ file_name }}">
+                    <source src="{{ file_url }}" type="video/mp4">
+                    Your browser does not support HTML5 video playback.
+                </video>
+
+                <!-- Clean Video Fallback / Error State -->
+                <div id="videoErrorOverlay" class="hidden absolute inset-0 bg-dark-bg/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30">
+                    <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    </div>
+                    <h3 class="font-heading text-lg font-bold text-white mb-2">Video Unavailable in Browser</h3>
+                    <p class="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">This video format or codec might not be supported by your browser. Please try opening with an external player or downloading directly.</p>
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        <button onclick="vlc_player()" class="px-4 py-2.5 rounded-xl bg-brand-vlc/20 text-brand-vlc border border-brand-vlc/30 hover:bg-brand-vlc/30 text-xs font-semibold transition-colors flex items-center gap-2">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" alt="VLC" class="w-4 h-4">
+                            Open in VLC
+                        </button>
+                        <button onclick="Download()" class="px-4 py-2.5 rounded-xl bg-brand-500 text-white hover:bg-brand-600 text-xs font-semibold transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a1 1 0 001 1h14a1 1 0 001-1v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Download Video
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Video Player -->
-        <div class="player-container mb-12">
-            <video id="player" class="player" playsinline controls data-poster="https://i.ibb.co/356f2g1J/photo-2026-02-12-22-08-21.jpg">
-                <source src="{{ file_url }}" type="video/mp4">
-            </video>
-        </div>
+        <!-- Movie / File Information Header -->
+        <section class="vlc-card p-5 sm:p-6 space-y-4">
+            <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div class="space-y-2 flex-grow">
+                    <h1 class="font-heading text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug break-words" id="fileTitle">
+                        {{ file_name }}
+                    </h1>
+                    
+                    <!-- Compact Metadata Row -->
+                    <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-400">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-slate-300 font-mono">
+                            <svg class="w-3.5 h-3.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            {{ file_size }}
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-slate-300 uppercase tracking-wider font-semibold text-[11px]">
+                            MP4
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-slate-300">
+                            VLCBox Stream
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-[11px]">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Fast Server
+                        </span>
+                    </div>
+                </div>
 
-        <!-- External Players Grid -->
-        <div class="mb-16">
-            <h2 class="text-lg font-bold mb-6 flex items-center gap-3">
-                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                Open in External Player
-            </h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <!-- VLC -->
-                <button onclick="vlc_player()" class="external-btn p-4 rounded-2xl flex flex-col items-center gap-3">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" class="w-10 h-10" alt="VLC">
-                    <span class="text-xs font-bold">VLC Player</span>
+                <!-- Primary Action Buttons -->
+                <div class="flex items-center gap-2.5 shrink-0 pt-2 md:pt-0">
+                    <button onclick="Download()" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-brand-500/25 transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/50">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a1 1 0 001 1h14a1 1 0 001-1v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        <span>Download</span>
+                    </button>
+                    <button onclick="shareLink()" class="inline-flex items-center justify-center p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-white/20" title="Share" aria-label="Share">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                    </button>
+                    <button onclick="copyLink()" class="inline-flex items-center justify-center p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-white/20" title="Copy Watch Link" aria-label="Copy Link">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- External Players Section ("Open with") -->
+        <section class="space-y-3">
+            <div class="flex items-center justify-between px-1">
+                <h2 class="font-heading text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    Open With External Player
+                </h2>
+                <span class="text-[11px] text-slate-500">Tap to launch app</span>
+            </div>
+
+            <!-- Compact Grid / Scrollable Bar -->
+            <div class="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+                <!-- VLC Player -->
+                <button onclick="vlc_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-brand-vlc/50" aria-label="Open with VLC Player">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" alt="VLC" class="w-7 h-7 object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<svg class=\'w-6 h-6 text-amber-500\' fill=\'currentColor\' viewBox=\'0 0 24 24\'><path d=\'M12 2L1 21h22L12 2zm0 4.25l7.5 13.25h-15L12 6.25z\'/></svg>'">
+                    </div>
+                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">VLC</span>
                 </button>
-                <!-- MX -->
-                <button onclick="mx_player()" class="external-btn p-4 rounded-2xl flex flex-col items-center gap-3">
-                    <img src="https://vlcbox.v_vlcbox.li/assets/mx.png" class="w-10 h-10" onerror="this.src='https://i.ibb.co/L5QyZp0/mx.png'" alt="MX">
-                    <span class="text-xs font-bold">MX Player</span>
+
+                <!-- MX Player -->
+                <button onclick="mx_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-brand-mx/50" aria-label="Open with MX Player">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <img src="https://vlcbox.v_vlcbox.li/assets/mx.png" alt="MX" class="w-7 h-7 object-contain" onerror="this.onerror=null; this.src='https://i.ibb.co/L5QyZp0/mx.png';">
+                    </div>
+                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">MX Player</span>
                 </button>
-                <!-- PlayIt -->
-                <button onclick="playit_player()" class="external-btn p-4 rounded-2xl flex flex-col items-center gap-3">
-                    <img src="https://vlcbox.v_vlcbox.li/assets/playit.png" class="w-10 h-10" onerror="this.src='https://i.ibb.co/K2T3L0p/playit.png'" alt="PlayIt">
-                    <span class="text-xs font-bold">Play-It</span>
+
+                <!-- PlayIt Player -->
+                <button onclick="playit_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-cyan-500/50" aria-label="Open with PlayIt Player">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <img src="https://vlcbox.v_vlcbox.li/assets/playit.png" alt="PlayIt" class="w-7 h-7 object-contain" onerror="this.onerror=null; this.src='https://i.ibb.co/K2T3L0p/playit.png';">
+                    </div>
+                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">PlayIt</span>
                 </button>
-                <!-- KM -->
-                <button onclick="km_player()" class="external-btn p-4 rounded-2xl flex flex-col items-center gap-3">
-                    <img src="https://vlcbox.v_vlcbox.li/assets/km.png" class="w-10 h-10" onerror="this.src='https://i.ibb.co/0XgY1m0/km.png'" alt="KM">
-                    <span class="text-xs font-bold">KM Player</span>
+
+                <!-- KM Player -->
+                <button onclick="km_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-purple-500/50" aria-label="Open with KM Player">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <img src="https://vlcbox.v_vlcbox.li/assets/km.png" alt="KM" class="w-7 h-7 object-contain" onerror="this.onerror=null; this.src='https://i.ibb.co/0XgY1m0/km.png';">
+                    </div>
+                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">KMPlayer</span>
                 </button>
+
                 <!-- S Player -->
-                <button onclick="s_player()" class="external-btn p-4 rounded-2xl flex flex-col items-center gap-3">
-                    <img src="https://vlcbox.v_vlcbox.li/assets/splayer.png" class="w-10 h-10" onerror="this.src='https://i.ibb.co/wL8XG40/splayer.png'" alt="S Player">
-                    <span class="text-xs font-bold">S Player</span>
+                <button onclick="s_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-blue-500/50" aria-label="Open with S Player">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <img src="https://vlcbox.v_vlcbox.li/assets/splayer.png" alt="S Player" class="w-7 h-7 object-contain" onerror="this.onerror=null; this.src='https://i.ibb.co/wL8XG40/splayer.png';">
+                    </div>
+                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">S Player</span>
                 </button>
-                <!-- Download -->
-                <button onclick="Download()" class="external-btn p-4 rounded-2xl flex flex-col items-center gap-3 border-primary/30 bg-primary/5">
-                    <svg class="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a1 1 0 001 1h14a1 1 0 001-1v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    <span class="text-xs font-bold text-primary">Download</span>
-                </button>
-            </div>
-        </div>
 
-        <!-- Help Section -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="glass p-6 rounded-2xl border-l-4 border-accent">
-                <h3 class="text-sm font-bold text-accent mb-2 uppercase tracking-wide">Video Not Playing?</h3>
-                <p class="text-xs text-slate-400 leading-relaxed">
-                    Browser player may not support some video codecs. If it doesn't play, please use <b>External Players</b> like VLC or MX for a better experience.
-                </p>
+                <!-- HD Player -->
+                <button onclick="hd_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-rose-500/50" aria-label="Open with HD Player">
+                    <div class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">HD Player</span>
+                </button>
             </div>
-            <div class="glass p-6 rounded-2xl border-l-4 border-primary">
-                <h3 class="text-sm font-bold text-primary mb-2 uppercase tracking-wide">Report Issue</h3>
-                <p class="text-xs text-slate-400 leading-relaxed">
-                    Found a broken link or having playback issues? Contact our <a href="https://telegram.me/rickakhtar" class="text-primary font-bold underline">Support Team</a> immediately.
-                </p>
+        </section>
+
+        <!-- Help & Information Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="vlc-card p-4 sm:p-5 flex items-start gap-3.5 border-l-4 border-l-brand-500">
+                <div class="p-2 rounded-xl bg-brand-500/10 text-brand-500 shrink-0 mt-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="font-heading text-xs font-bold uppercase tracking-wider text-slate-200">Playback Compatibility</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        If audio plays without video or buffering occurs, your browser may lack specific video codecs. Tap any <b>External Player</b> button above for seamless playback.
+                    </p>
+                </div>
             </div>
-        </div>
+
+            <div class="vlc-card p-4 sm:p-5 flex items-start gap-3.5 border-l-4 border-l-emerald-500">
+                <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0 mt-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="font-heading text-xs font-bold uppercase tracking-wider text-slate-200">Need Assistance?</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Encountering broken streams or file issues? Contact our <a href="https://telegram.me/rickakhtar" target="_blank" rel="noopener" class="text-brand-500 hover:underline font-semibold">Support Team</a> on Telegram for instant resolution.
+                    </p>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Footer -->
-    <footer class="w-full py-12 px-8 mt-10 border-t border-white/5 bg-black/50">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-            <div class="text-center md:text-left">
-                <p class="text-slate-500 text-sm">&copy; 2026 VLCBox Enterprise. High Performance Streaming.</p>
-                <p class="text-[10px] text-slate-700 mt-1 uppercase tracking-widest font-bold">Cloud Delivery Network Cluster Alpha</p>
+    <footer class="w-full border-t border-white/5 bg-black/40 py-8 px-4 sm:px-6 mt-12">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div class="space-y-1">
+                <div class="flex items-center justify-center sm:justify-start gap-2">
+                    <span class="font-heading text-sm font-bold text-white tracking-tight">VLCBox Online Player</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-slate-400 border border-white/10 font-mono">v2.0</span>
+                </div>
+                <p class="text-xs text-slate-500">&copy; 2026 VLCBox Enterprise. High Performance Media Streaming Network.</p>
             </div>
-            <div class="flex gap-4">
-                <a href="https://github.com/vlcbox" class="p-3 glass rounded-full hover:bg-white/10 transition-all">
-                    <svg class="w-5 h-5 fill-slate-400" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                </a>
+
+            <div class="flex items-center gap-4 text-xs text-slate-400">
+                <a href="https://telegram.me/vlcbox" target="_blank" rel="noopener" class="hover:text-white transition-colors">Telegram Channel</a>
+                <span>•</span>
+                <a href="https://github.com/vlcbox" target="_blank" rel="noopener" class="hover:text-white transition-colors">GitHub</a>
+                <span>•</span>
+                <a href="https://telegram.me/rickakhtar" target="_blank" rel="noopener" class="hover:text-white transition-colors">Support</a>
             </div>
         </div>
     </footer>
 
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900/95 border border-white/15 text-white text-xs font-semibold shadow-2xl backdrop-blur-md">
+        <svg id="toastIcon" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toastMsg">Link copied</span>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const player = new Plyr('#player', {
-                controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
-                tooltips: { controls: true, seek: true }
-            });
-        });
-
-        // Intent Link Logic
+        // Intent Link Derivation Logic - EXACT MATCH with existing backend requirement
         const Link = window.location.href.replace("/watch/", "/");
 
-        function vlc_player() { window.location.href = `vlc://${Link}`; }
-        function mx_player() { window.location.href = `intent:${Link}#Intent;package=com.mxtech.videoplayer.ad;end`; }
-        function playit_player() { window.location.href = `playit://playerv2/video?url=${Link}`; }
-        function s_player() { window.location.href = `intent:${Link}#Intent;action=com.young.simple.player.playback_online;package=com.young.simple.player;end`; }
-        function km_player() { window.location.href = `intent:${Link}#Intent;package=com.kmplayer;end`; }
-        function hd_player() { window.location.href = `intent:${Link}#Intent;package=uplayer.video.player;end`; }
-        function Download() { window.location.href = Link; }
+        // Toast Notification System
+        let toastTimeout;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
 
-        // Disable Inspect
-        document.addEventListener("contextmenu", e => e.preventDefault());
-        document.onkeydown = e => {
-            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73)) return false;
-        };
+            if (toastMsg) toastMsg.innerText = message;
 
-        // Truncate Text
-        const titleEl = document.getElementById('myDiv');
-        if(titleEl.innerText.length > 80) titleEl.innerText = titleEl.innerText.slice(0, 80) + "...";
+            toast.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        // External Player Dispatchers
+        function vlc_player() {
+            showToast("Opening VLC Player...");
+            window.location.href = `vlc://${Link}`;
+        }
+        function mx_player() {
+            showToast("Opening MX Player...");
+            window.location.href = `intent:${Link}#Intent;package=com.mxtech.videoplayer.ad;end`;
+        }
+        function playit_player() {
+            showToast("Opening PlayIt...");
+            window.location.href = `playit://playerv2/video?url=${Link}`;
+        }
+        function s_player() {
+            showToast("Opening S Player...");
+            window.location.href = `intent:${Link}#Intent;action=com.young.simple.player.playback_online;package=com.young.simple.player;end`;
+        }
+        function km_player() {
+            showToast("Opening KMPlayer...");
+            window.location.href = `intent:${Link}#Intent;package=com.kmplayer;end`;
+        }
+        function hd_player() {
+            showToast("Opening HD Player...");
+            window.location.href = `intent:${Link}#Intent;package=uplayer.video.player;end`;
+        }
+        function Download() {
+            showToast("Starting Download...");
+            window.location.href = Link;
+        }
+
+        // Share & Copy Actions
+        function copyLink() {
+            const watchUrl = window.location.href;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(watchUrl).then(() => {
+                    showToast("Link copied to clipboard");
+                }).catch(() => {
+                    fallbackCopy(watchUrl);
+                });
+            } else {
+                fallbackCopy(watchUrl);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast("Link copied to clipboard");
+            } catch (err) {
+                showToast("Failed to copy link");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function shareLink() {
+            if (navigator.share) {
+                navigator.share({
+                    title: document.title,
+                    text: 'Watch on VLCBox Player:',
+                    url: window.location.href
+                }).catch(() => {});
+            } else {
+                copyLink();
+            }
+        }
+
+        // Expose functions to global window object
+        window.vlc_player = vlc_player;
+        window.mx_player = mx_player;
+        window.playit_player = playit_player;
+        window.s_player = s_player;
+        window.km_player = km_player;
+        window.hd_player = hd_player;
+        window.Download = Download;
+        window.copyLink = copyLink;
+        window.shareLink = shareLink;
+
+        // Document Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Plyr Video Player
+            const videoElem = document.getElementById('player');
+            const errorOverlay = document.getElementById('videoErrorOverlay');
+
+            if (videoElem) {
+                const player = new Plyr('#player', {
+                    controls: [
+                        'play-large', 'restart', 'rewind', 'play', 'fast-forward', 
+                        'progress', 'current-time', 'duration', 'mute', 'volume', 
+                        'captions', 'settings', 'pip', 'airplay', 'fullscreen'
+                    ],
+                    seekTime: 10,
+                    tooltips: { controls: true, seek: true },
+                    keyboard: { focused: true, global: true },
+                    resetOnEnd: true
+                });
+
+                // Video Error Event Listener
+                videoElem.addEventListener('error', () => {
+                    if (errorOverlay) {
+                        errorOverlay.classList.remove('hidden');
+                    }
+                });
+            }
+
+            // Optional Title Truncation if unusually long on small screens
+            const titleEl = document.getElementById('fileTitle');
+            if (titleEl && titleEl.innerText.length > 150) {
+                titleEl.innerText = titleEl.innerText.slice(0, 147) + '...';
+            }
+        });
     </script>
 </body>
 </html>
