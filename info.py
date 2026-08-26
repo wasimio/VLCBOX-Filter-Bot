@@ -178,6 +178,10 @@ URL = environ.get("URL", "https://vlc-f4235fbcfad6.herokuapp.com/")
 # Rename Info : If True Then Bot Rename File Else Not
 RENAME_MODE = bool(environ.get('RENAME_MODE', False)) # Set True or False
 
+# Ephemeral Group Messages (Experimental Feature Flag - Default: False)
+EPHEMERAL_GROUP_MESSAGES = bool(environ.get('EPHEMERAL_GROUP_MESSAGES', False))
+EXPERIMENTAL_BOT_TOKEN = environ.get('EXPERIMENTAL_BOT_TOKEN', '')
+
 
 # Auto Approve Info : If True Then Bot Approve New Upcoming Join Request Else Not
 AUTO_APPROVE_MODE = bool(environ.get('AUTO_APPROVE_MODE', False)) # Set True or False
