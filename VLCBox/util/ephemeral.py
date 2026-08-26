@@ -13,6 +13,7 @@ import logging
 import re
 import aiohttp
 import asyncio
+from dataclasses import dataclass
 from typing import Optional, Union, Dict, Any
 from pyrogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup
 from pyrogram import enums
@@ -20,6 +21,21 @@ from info import EPHEMERAL_GROUP_MESSAGES, EXPERIMENTAL_BOT_TOKEN, BOT_TOKEN
 from utils import get_settings
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class EphemeralContext:
+    """
+    Dedicated context encapsulation for handling callbacks on ephemeral messages.
+    """
+    chat_id: int
+    receiver_user_id: int
+    message_id: int
+    ephemeral_message_id: int
+    request_user_id: int
+    search_key: str
+    is_ephemeral: bool
+    is_photo: bool
 
 
 def get_active_bot_token(client: Optional[Any] = None) -> str:
@@ -99,6 +115,85 @@ def serialize_reply_markup(reply_markup: Optional[Union[InlineKeyboardMarkup, Re
         }
 
     return None
+
+
+def log_callback_debug(query: Any) -> None:
+    """
+    Phase 2 safe diagnostic logging for callback queries.
+    Logs metadata required to diagnose ephemeral callback query behavior.
+    """
+    try:
+        data = getattr(query, "data", None)
+        from_user_id = query.from_user.id if getattr(query, "from_user", None) else None
+        msg = getattr(query, "message", None)
+        chat_id = msg.chat.id if msg and getattr(msg, "chat", None) else None
+        message_id = msg.id if msg else None
+        reply_to_msg_id = msg.reply_to_message.id if msg and getattr(msg, "reply_to_message", None) else None
+        ephemeral_message_id = message_id
+        msg_type = type(msg).__name__ if msg else "None"
+
+        logger.info(
+            f"\nCALLBACK_DEBUG:\n"
+            f"data={data}\n"
+            f"from_user_id={from_user_id}\n"
+            f"chat_id={chat_id}\n"
+            f"message_id={message_id}\n"
+            f"reply_to_message_id={reply_to_msg_id}\n"
+            f"ephemeral_message_id={ephemeral_message_id}\n"
+            f"callback_message_type={msg_type}"
+        )
+    except Exception as e:
+        logger.warning(f"CALLBACK_DEBUG logging error: {e}")
+
+
+async def extract_callback_context(query: Any, key: Optional[str] = None) -> EphemeralContext:
+    """
+    Extract safe callback context from query and optional search key.
+    Handles situations where query.message or query.message.reply_to_message is None.
+    """
+    user_id = query.from_user.id if getattr(query, "from_user", None) else 0
+    msg = getattr(query, "message", None)
+
+    chat_id = 0
+    message_id = 0
+    is_photo = False
+
+    if msg:
+        if getattr(msg, "chat", None):
+            chat_id = msg.chat.id
+        message_id = getattr(msg, "id", 0) or 0
+        is_photo = bool(getattr(msg, "photo", None))
+
+    # Fallback to key if chat_id is missing
+    if not chat_id and key and "-" in key:
+        try:
+            chat_id = int(key.rsplit("-", 1)[0])
+        except Exception:
+            pass
+
+    is_group = False
+    if chat_id < 0:
+        is_group = True
+    elif msg and getattr(msg, "chat", None):
+        is_group = msg.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]
+
+    private_results_enabled = False
+    if chat_id:
+        settings = await get_settings(chat_id)
+        private_results_enabled = bool(settings and settings.get("private_results", False))
+
+    is_ephemeral = bool(EPHEMERAL_GROUP_MESSAGES and is_group and private_results_enabled and user_id != 0)
+
+    return EphemeralContext(
+        chat_id=chat_id,
+        receiver_user_id=user_id,
+        message_id=message_id,
+        ephemeral_message_id=message_id,
+        request_user_id=user_id,
+        search_key=key or "",
+        is_ephemeral=is_ephemeral,
+        is_photo=is_photo
+    )
 
 
 async def send_ephemeral(
@@ -367,7 +462,8 @@ async def edit_ephemeral_reply_markup(
     payload: Dict[str, Any] = {
         "chat_id": chat_id,
         "receiver_user_id": int(user_id),
-        "ephemeral_message_id": int(message_id)
+        "ephemeral_message_id": int(message_id),
+        "message_id": int(message_id)
     }
     serialized_markup = serialize_reply_markup(reply_markup)
     if serialized_markup:
@@ -413,6 +509,7 @@ async def edit_ephemeral_text(
         "chat_id": chat_id,
         "receiver_user_id": int(user_id),
         "ephemeral_message_id": int(message_id),
+        "message_id": int(message_id),
         "text": clean_text,
         "disable_web_page_preview": disable_web_page_preview
     }
@@ -472,6 +569,7 @@ async def edit_ephemeral_caption(
         "chat_id": chat_id,
         "receiver_user_id": int(user_id),
         "ephemeral_message_id": int(message_id),
+        "message_id": int(message_id),
         "caption": clean_caption
     }
     if parse_mode:
@@ -507,108 +605,88 @@ async def edit_ephemeral_caption(
         return {"success": False, "error": str(e)}
 
 
-async def edit_result_message(
+async def update_result_message(
     client: Any,
     query: Any,
     text: Optional[str] = None,
     caption: Optional[str] = None,
     reply_markup: Optional[Union[InlineKeyboardMarkup, ReplyKeyboardMarkup, Dict[str, Any]]] = None,
-    parse_mode: Optional[str] = "HTML"
+    parse_mode: Optional[str] = "HTML",
+    search_key: Optional[str] = None
 ) -> bool:
     """
-    Unified result message editing abstraction.
+    Unified result message editing abstraction (Phase 7).
 
-    If the callback originates from an ephemeral group message, edits it using direct Telegram Bot API
-    (editEphemeralMessageReplyMarkup / editEphemeralMessageText / editEphemeralMessageCaption).
-    Otherwise, uses standard Pyrogram edit methods.
+    - NORMAL RESULT: Uses existing Pyrogram message editing.
+    - EPHEMERAL RESULT: Uses direct Telegram Bot API ephemeral edit methods
+      (editEphemeralMessageCaption / editEphemeralMessageText / editEphemeralMessageReplyMarkup).
+    - Phase 14: Does NOT fall back to duplicate public messages on ephemeral edit error.
     """
-    chat_id = query.message.chat.id
-    user_id = query.from_user.id if query.from_user else 0
-    message_id = query.message.id
-    is_group = query.message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]
+    ctx = await extract_callback_context(query, key=search_key)
 
-    # Check if this group has private results enabled and global switch is on
-    settings = await get_settings(chat_id)
-    private_results_enabled = bool(settings and settings.get("private_results", False))
-    is_ephemeral_context = EPHEMERAL_GROUP_MESSAGES and is_group and private_results_enabled and user_id != 0
-
-    if is_ephemeral_context:
-        logger.info(f"EPHEMERAL_CALLBACK: attempt edit - chat_id={chat_id}, user_id={user_id}, msg_id={message_id}")
+    if ctx.is_ephemeral:
+        logger.info(f"EPHEMERAL_CALLBACK: attempt edit - chat_id={ctx.chat_id}, user_id={ctx.receiver_user_id}, msg_id={ctx.ephemeral_message_id}")
 
         content_text = caption or text
         res = None
 
         if content_text:
-            # Try caption edit first if message has photo
-            if query.message.photo:
-                res = await edit_ephemeral_caption(
-                    client=client,
-                    chat_id=chat_id,
-                    user_id=user_id,
-                    message_id=message_id,
-                    caption=content_text,
-                    reply_markup=reply_markup,
-                    parse_mode=parse_mode
-                )
-                if not res.get("success"):
-                    res = await edit_ephemeral_text(
-                        client=client,
-                        chat_id=chat_id,
-                        user_id=user_id,
-                        message_id=message_id,
-                        text=content_text,
-                        reply_markup=reply_markup,
-                        parse_mode=parse_mode
-                    )
-            else:
+            # Try caption edit first (supports poster photos), then fallback to text edit
+            res = await edit_ephemeral_caption(
+                client=client,
+                chat_id=ctx.chat_id,
+                user_id=ctx.receiver_user_id,
+                message_id=ctx.ephemeral_message_id,
+                caption=content_text,
+                reply_markup=reply_markup,
+                parse_mode=parse_mode
+            )
+            if not res.get("success"):
                 res = await edit_ephemeral_text(
                     client=client,
-                    chat_id=chat_id,
-                    user_id=user_id,
-                    message_id=message_id,
+                    chat_id=ctx.chat_id,
+                    user_id=ctx.receiver_user_id,
+                    message_id=ctx.ephemeral_message_id,
                     text=content_text,
                     reply_markup=reply_markup,
                     parse_mode=parse_mode
                 )
-                if not res.get("success"):
-                    res = await edit_ephemeral_caption(
-                        client=client,
-                        chat_id=chat_id,
-                        user_id=user_id,
-                        message_id=message_id,
-                        caption=content_text,
-                        reply_markup=reply_markup,
-                        parse_mode=parse_mode
-                    )
         else:
             res = await edit_ephemeral_reply_markup(
                 client=client,
-                chat_id=chat_id,
-                user_id=user_id,
-                message_id=message_id,
+                chat_id=ctx.chat_id,
+                user_id=ctx.receiver_user_id,
+                message_id=ctx.ephemeral_message_id,
                 reply_markup=reply_markup
             )
 
         if res and res.get("success"):
-            logger.info(f"EPHEMERAL_CALLBACK: success - chat_id={chat_id}, user_id={user_id}")
+            logger.info(f"EPHEMERAL_CALLBACK: success - chat_id={ctx.chat_id}, user_id={ctx.receiver_user_id}")
             return True
 
         err_msg = res.get("error", "Unknown error") if res else "No response"
-        logger.warning(f"EPHEMERAL_CALLBACK: ephemeral edit failed ({err_msg}), falling back to standard edit")
+        logger.error(f"EPHEMERAL_CALLBACK: ephemeral edit failed ({err_msg}) for chat_id={ctx.chat_id}, user_id={ctx.receiver_user_id}")
+        # Phase 14: Do NOT fall back silently to public message creation during callback handling
+        return False
 
     # Standard / Normal / Public Edit path
     try:
         content_text = caption or text
         markup = reply_markup if isinstance(reply_markup, InlineKeyboardMarkup) else (InlineKeyboardMarkup(reply_markup) if reply_markup else None)
+        msg = getattr(query, "message", None)
+        if not msg:
+            logger.error("EPHEMERAL_CALLBACK: standard edit failed - query.message is None")
+            return False
+
         if content_text:
-            if query.message.photo:
-                await query.message.edit_caption(
+            if getattr(msg, "photo", None):
+                await msg.edit_caption(
                     caption=content_text,
                     reply_markup=markup,
                     parse_mode=enums.ParseMode.HTML if parse_mode == "HTML" else None
                 )
             else:
-                await query.message.edit_text(
+                await msg.edit_text(
                     text=content_text,
                     reply_markup=markup,
                     disable_web_page_preview=True,
@@ -625,6 +703,10 @@ async def edit_result_message(
             return True
         logger.error(f"EPHEMERAL_CALLBACK: standard edit error - {e}")
         return False
+
+
+# Backward compatibility alias
+edit_result_message = update_result_message
 
 
 async def send_group_search_result(

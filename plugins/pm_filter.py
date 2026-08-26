@@ -19,7 +19,7 @@ from database.connections_mdb import mydb, active_connection, all_connections, d
 from database.gfilters_mdb import find_gfilter, get_gfilters, del_allg
 from urllib.parse import quote_plus
 from VLCBox.util.file_properties import get_name, get_hash, get_media_file_size
-from VLCBox.util.ephemeral import send_group_search_result, edit_result_message
+from VLCBox.util.ephemeral import send_group_search_result, update_result_message, edit_result_message, log_callback_debug
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
@@ -87,6 +87,7 @@ async def pm_text(bot, message):
     
 @MainBot.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
+    log_callback_debug(query)
     ident, req, key, offset = query.data.split("_")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     if int(req) not in [query.from_user.id, 0]:
@@ -96,11 +97,9 @@ async def next_page(bot, query):
     except:
         offset = 0
     search = FRESH.get(key)
-   # if not search:
-      #  await query.answer(script.OLD_ALRT_TXT.format(query.from_user.first_name),show_alert=True)
-       # return
+    chat_id = query.message.chat.id if (query.message and query.message.chat) else int(key.rsplit("-", 1)[0])
 
-    files, n_offset, total = await get_search_results(query.message.chat.id, search, offset=offset, filter=True)
+    files, n_offset, total = await get_search_results(chat_id, search, offset=offset, filter=True)
     try:
         n_offset = int(n_offset)
     except:
@@ -109,8 +108,8 @@ async def next_page(bot, query):
     if not files:
         return
     temp.GETALL[key] = files
-    temp.SHORT[query.from_user.id] = query.message.chat.id
-    settings = await get_settings(query.message.chat.id)
+    temp.SHORT[query.from_user.id] = chat_id
+    settings = await get_settings(chat_id)
     pre = 'filep' if settings['file_secure'] else 'file'
     if settings['button']:
         btn = [
@@ -218,9 +217,9 @@ async def next_page(bot, query):
         time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
         remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
         cap = await get_cap(settings, remaining_seconds, files, query, total, search)
-        await edit_result_message(client=bot, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=bot, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     else:
-        await edit_result_message(client=bot, query=query, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=bot, query=query, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     await query.answer()
 
 @MainBot.on_callback_query(filters.regex(r"^spol"))
@@ -259,7 +258,7 @@ async def advantage_spoll_choker(bot, query):
 # Year 
 @MainBot.on_callback_query(filters.regex(r"^years#"))
 async def years_cb_handler(client: Client, query: CallbackQuery):
-
+    log_callback_debug(query)
     try:
         if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
             return await query.answer(
@@ -299,11 +298,12 @@ async def years_cb_handler(client: Client, query: CallbackQuery):
     offset = 0
     btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fy#homepage#{key}")])
 
-    await edit_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn))
+    await update_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     await query.answer()
 
 @MainBot.on_callback_query(filters.regex(r"^fy#"))
 async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
+    log_callback_debug(query)
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     search = FRESH.get(key)
@@ -317,7 +317,7 @@ async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
     else:
         search = search
     req = query.from_user.id
-    chat_id = query.message.chat.id
+    chat_id = query.message.chat.id if (query.message and query.message.chat) else int(key.rsplit("-", 1)[0])
     message = query.message
     try:
         if int(req) not in [query.message.reply_to_message.from_user.id, 0]:
@@ -404,16 +404,16 @@ async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
         time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
         remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
         cap = await get_cap(settings, remaining_seconds, files, query, total_results, search)
-        await edit_result_message(client=client, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=client, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     else:
-        await edit_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     await query.answer()  
 
 # Episode
 
 @MainBot.on_callback_query(filters.regex(r"^episodes#"))
 async def episodes_cb_handler(client: Client, query: CallbackQuery):
-
+    log_callback_debug(query)
     try:
         if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
             return await query.answer(
@@ -453,11 +453,12 @@ async def episodes_cb_handler(client: Client, query: CallbackQuery):
     offset = 0
     btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fe#homepage#{key}")])
 
-    await edit_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn))
+    await update_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     await query.answer()
 
 @MainBot.on_callback_query(filters.regex(r"^fe#"))
 async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
+    log_callback_debug(query)
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     search = FRESH.get(key)
@@ -471,7 +472,7 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
     else:
         search = search
     req = query.from_user.id
-    chat_id = query.message.chat.id
+    chat_id = query.message.chat.id if (query.message and query.message.chat) else int(key.rsplit("-", 1)[0])
     message = query.message
     try:
         if int(req) not in [query.message.reply_to_message.from_user.id, 0]:
@@ -558,9 +559,9 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
         time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
         remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
         cap = await get_cap(settings, remaining_seconds, files, query, total_results, search)
-        await edit_result_message(client=client, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=client, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     else:
-        await edit_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     await query.answer()
     
 
@@ -569,7 +570,7 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
 
 @MainBot.on_callback_query(filters.regex(r"^languages#"))
 async def languages_cb_handler(client: Client, query: CallbackQuery):
-
+    log_callback_debug(query)
     try:
         if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
             return await query.answer(
@@ -609,11 +610,12 @@ async def languages_cb_handler(client: Client, query: CallbackQuery):
     offset = 0
     btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ​↭", callback_data=f"fl#homepage#{key}")])
 
-    await edit_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn))
+    await update_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     await query.answer()
 
 @MainBot.on_callback_query(filters.regex(r"^fl#"))
 async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
+    log_callback_debug(query)
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     search = FRESH.get(key)
@@ -627,7 +629,7 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
     else:
         search = search
     req = query.from_user.id
-    chat_id = query.message.chat.id
+    chat_id = query.message.chat.id if (query.message and query.message.chat) else int(key.rsplit("-", 1)[0])
     message = query.message
     try:
         if int(req) not in [query.message.reply_to_message.from_user.id, 0]:
@@ -714,16 +716,16 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
         time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
         remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
         cap = await get_cap(settings, remaining_seconds, files, query, total_results, search)
-        await edit_result_message(client=client, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=client, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     else:
-        await edit_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     await query.answer()
     
     
     
 @MainBot.on_callback_query(filters.regex(r"^seasons#"))
 async def seasons_cb_handler(client: Client, query: CallbackQuery):
-
+    log_callback_debug(query)
     try:
         if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
             return await query.answer(
@@ -765,11 +767,12 @@ async def seasons_cb_handler(client: Client, query: CallbackQuery):
     offset = 0
     btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ​↭", callback_data=f"fs#homepage#{key}")])
 
-    await edit_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn))
+    await update_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     await query.answer()
 
 @MainBot.on_callback_query(filters.regex(r"^fs#"))
 async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
+    log_callback_debug(query)
     _, seas, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     search = FRESH.get(key)
@@ -789,7 +792,7 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
         search = search
     
     req = query.from_user.id
-    chat_id = query.message.chat.id
+    chat_id = query.message.chat.id if (query.message and query.message.chat) else int(key.rsplit("-", 1)[0])
     message = query.message
     try:
         if int(req) not in [query.message.reply_to_message.from_user.id, 0]:
@@ -882,14 +885,14 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
         remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
         total_results = len(files)
         cap = await get_cap(settings, remaining_seconds, files, query, total_results, search)
-        await edit_result_message(client=client, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=client, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     else:
-        await edit_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     await query.answer()
 
 @MainBot.on_callback_query(filters.regex(r"^qualities#"))
 async def qualities_cb_handler(client: Client, query: CallbackQuery):
-
+    log_callback_debug(query)
     try:
         if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
             return await query.answer(
@@ -929,11 +932,12 @@ async def qualities_cb_handler(client: Client, query: CallbackQuery):
     offset = 0
     btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fq#homepage#{key}")])
 
-    await edit_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn))
+    await update_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     await query.answer()
 
 @MainBot.on_callback_query(filters.regex(r"^fq#"))
 async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
+    log_callback_debug(query)
     _, qual, key = query.data.split("#")
     search = FRESH.get(key)
     try:
@@ -946,7 +950,7 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
     else:
         search = search
     req = query.from_user.id
-    chat_id = query.message.chat.id
+    chat_id = query.message.chat.id if (query.message and query.message.chat) else int(key.rsplit("-", 1)[0])
     message = query.message
     try:
         if int(req) not in [query.message.reply_to_message.from_user.id, 0]:
@@ -1038,9 +1042,9 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
         remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
         total_results = len(files)
         cap = await get_cap(settings, remaining_seconds, files, query, total_results, search)
-        await edit_result_message(client=client, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=client, query=query, text=cap, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     else:
-        await edit_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn))
+        await update_result_message(client=client, query=query, reply_markup=InlineKeyboardMarkup(btn), search_key=key)
     await query.answer()
                 
 @MainBot.on_callback_query()
