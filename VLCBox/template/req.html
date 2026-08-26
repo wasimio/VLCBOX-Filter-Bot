@@ -104,7 +104,7 @@
             transform: translateY(0);
         }
 
-        /* Video Player Wrapper */
+        /* Video Player Container */
         .player-wrapper {
             position: relative;
             width: 100%;
@@ -116,6 +116,7 @@
             box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8), 0 0 30px -10px rgba(99, 102, 241, 0.15);
             user-select: none;
             -webkit-user-select: none;
+            touch-action: manipulation;
         }
 
         .plyr {
@@ -124,18 +125,26 @@
             border-radius: 20px;
         }
 
-        /* Hide Plyr's default center button in favor of our YouTube-style control hub */
+        /* Hide Plyr's default center big play button */
         .plyr--full-ui.plyr--video .plyr__control--overlaid {
             display: none !important;
         }
 
+        /* Bottom Plyr Controls */
         .plyr__controls {
             background: linear-gradient(0deg, rgba(9, 13, 22, 0.95) 0%, rgba(9, 13, 22, 0.4) 70%, transparent 100%) !important;
             padding: 16px 12px 10px 12px !important;
             gap: 4px !important;
-            z-index: 40 !important;
+            z-index: 35 !important;
             pointer-events: auto !important;
-            transition: opacity 0.3s ease, transform 0.3s ease !important;
+            transition: opacity 0.25s ease, visibility 0.25s ease, transform 0.25s ease !important;
+        }
+
+        .player-wrapper.hide-ui .plyr__controls {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            transform: translateY(8px) !important;
         }
 
         @media (max-width: 640px) {
@@ -152,15 +161,26 @@
             }
         }
 
-        /* YouTube-Style Overlay (NO BLUR - Clean Crisp View) */
+        /* YouTube Transparent Gesture Detection Layer */
+        .yt-gesture-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            background: transparent;
+            pointer-events: auto;
+            touch-action: manipulation;
+            cursor: pointer;
+        }
+
+        /* YouTube-Style Overlay Container (NO BLUR - Clean Tint) */
         .yt-overlay-container {
             position: absolute;
             inset: 0;
-            z-index: 25;
+            z-index: 22;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.42);
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
@@ -170,7 +190,6 @@
         .yt-overlay-container.controls-visible {
             opacity: 1;
             visibility: visible;
-            pointer-events: auto;
         }
 
         /* YouTube Center Controls Hub */
@@ -179,6 +198,7 @@
             align-items: center;
             justify-content: center;
             gap: 28px;
+            z-index: 24;
             pointer-events: auto;
         }
 
@@ -187,19 +207,19 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(17, 24, 39, 0.75);
+            background: rgba(17, 24, 39, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             color: #ffffff;
             cursor: pointer;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             -webkit-tap-highlight-color: transparent;
             pointer-events: auto;
         }
 
         .yt-ctrl-btn:hover {
-            background: rgba(99, 102, 241, 0.85);
+            background: rgba(99, 102, 241, 0.9);
             border-color: rgba(99, 102, 241, 0.6);
             transform: scale(1.1);
         }
@@ -211,8 +231,8 @@
         .yt-play-btn {
             width: 64px;
             height: 64px;
-            background: rgba(99, 102, 241, 0.9);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(99, 102, 241, 0.92);
+            border-color: rgba(255, 255, 255, 0.35);
         }
 
         .yt-seek-btn {
@@ -244,7 +264,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 80%);
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.06) 50%, transparent 80%);
             color: #ffffff;
             opacity: 0;
             pointer-events: none;
@@ -364,7 +384,10 @@
                     Your browser does not support HTML5 video playback.
                 </video>
 
-                <!-- YouTube-Style Touch & Center Controls Layer (NO BLUR) -->
+                <!-- YouTube Active Touch Interaction Layer (Always catches single tap & double tap) -->
+                <div id="ytGestureLayer" class="yt-gesture-layer"></div>
+
+                <!-- YouTube-Style Overlay Container (Center Controls) -->
                 <div id="ytOverlay" class="yt-overlay-container">
                     <div class="yt-center-controls">
                         <!-- 10s Rewind Button -->
@@ -493,8 +516,8 @@
             <div class="grid grid-cols-2 gap-3 sm:gap-4">
                 <!-- VLC Player -->
                 <button onclick="vlc_player()" class="vlc-card-interactive p-4 sm:p-5 flex items-center justify-center sm:justify-start gap-3.5 group focus:outline-none focus:ring-2 focus:ring-brand-vlc/50" aria-label="Open in VLC Player">
-                    <div class="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" alt="VLC" class="w-7 h-7 object-contain">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" alt="VLC" class="w-8 h-8 object-contain">
                     </div>
                     <div class="text-left">
                         <div class="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">VLC Player</div>
@@ -504,8 +527,8 @@
 
                 <!-- MX Player -->
                 <button onclick="mx_player()" class="vlc-card-interactive p-4 sm:p-5 flex items-center justify-center sm:justify-start gap-3.5 group focus:outline-none focus:ring-2 focus:ring-brand-mx/50" aria-label="Open in MX Player">
-                    <div class="w-11 h-11 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/MX_Player_logo.svg" alt="MX Player" class="w-7 h-7 object-contain">
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/MX_Player_logo.svg" alt="MX Player" class="w-8 h-8 object-contain">
                     </div>
                     <div class="text-left">
                         <div class="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">MX Player</div>
@@ -680,8 +703,10 @@
 
         // Document Initialization
         document.addEventListener('DOMContentLoaded', () => {
+            const playerWrapper = document.getElementById('playerWrapper');
             const videoElem = document.getElementById('player');
             const errorOverlay = document.getElementById('videoErrorOverlay');
+            const ytGestureLayer = document.getElementById('ytGestureLayer');
             const ytOverlay = document.getElementById('ytOverlay');
             const btnCenterPlay = document.getElementById('btnCenterPlay');
             const btnCenterRewind = document.getElementById('btnCenterRewind');
@@ -706,7 +731,7 @@
             const isMobileScreen = window.innerWidth < 640;
             const plyrControls = isMobileScreen 
                 ? ['progress', 'current-time', 'duration', 'mute', 'settings', 'pip', 'fullscreen']
-                : ['play-large', 'restart', 'rewind', 'play', 'fast-forward', 'progress', 'current-time', 'duration', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'];
+                : ['restart', 'rewind', 'play', 'fast-forward', 'progress', 'current-time', 'duration', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'];
 
             if (videoElem) {
                 playerInstance = new Plyr('#player', {
@@ -715,7 +740,8 @@
                     tooltips: { controls: true, seek: true },
                     keyboard: { focused: true, global: true },
                     resetOnEnd: true,
-                    clickToPlay: false
+                    clickToPlay: false,
+                    hideControls: false
                 });
 
                 // Error Event
@@ -758,7 +784,6 @@
                     btnCenterPlay.addEventListener('click', (e) => {
                         e.stopPropagation();
                         playerInstance.togglePlay();
-                        startAutoHideTimer();
                     });
                 }
 
@@ -782,6 +807,7 @@
                 function showControls(keepVisible = false) {
                     if (!ytOverlay) return;
                     ytOverlay.classList.add('controls-visible');
+                    if (playerWrapper) playerWrapper.classList.remove('hide-ui');
                     clearTimeout(hideControlsTimeout);
                     if (!keepVisible && playerInstance && playerInstance.playing) {
                         startAutoHideTimer();
@@ -792,6 +818,7 @@
                     if (!ytOverlay) return;
                     if (playerInstance && playerInstance.playing) {
                         ytOverlay.classList.remove('controls-visible');
+                        if (playerWrapper) playerWrapper.classList.add('hide-ui');
                     }
                 }
 
@@ -799,7 +826,7 @@
                     clearTimeout(hideControlsTimeout);
                     hideControlsTimeout = setTimeout(() => {
                         hideControls();
-                    }, 2600);
+                    }, 2800);
                 }
 
                 // Double-Tap Seek with Multi-Tap Accumulation
@@ -837,55 +864,62 @@
                     }
                 }
 
-                // Touch / Click Dispatcher on Overlay
+                // Unified Gesture Handler for 1-Tap Toggle and Double-Tap Seek
+                function handleGestureTap(e) {
+                    // Check if click was directly on center buttons
+                    if (e.target && e.target.closest('.yt-ctrl-btn')) {
+                        return;
+                    }
+
+                    const rect = (ytGestureLayer || playerWrapper).getBoundingClientRect();
+                    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : 0));
+                    const x = clientX - rect.left;
+                    const width = rect.width;
+                    const tapRatio = width > 0 ? (x / width) : 0.5;
+                    const currentTime = new Date().getTime();
+                    const timeDiff = currentTime - lastTapTime;
+
+                    if (tapRatio < 0.35) {
+                        // Left 1/3 (Seek Backward)
+                        if (timeDiff < 300 && timeDiff > 0) {
+                            clearTimeout(singleTapTimeout);
+                            handleSeekAnimation('left', 10);
+                            lastTapTime = currentTime;
+                        } else {
+                            lastTapTime = currentTime;
+                            singleTapTimeout = setTimeout(() => {
+                                toggleControls();
+                            }, 260);
+                        }
+                    } else if (tapRatio > 0.65) {
+                        // Right 1/3 (Seek Forward)
+                        if (timeDiff < 300 && timeDiff > 0) {
+                            clearTimeout(singleTapTimeout);
+                            handleSeekAnimation('right', 10);
+                            lastTapTime = currentTime;
+                        } else {
+                            lastTapTime = currentTime;
+                            singleTapTimeout = setTimeout(() => {
+                                toggleControls();
+                            }, 260);
+                        }
+                    } else {
+                        // Center 1/3 (Instant 1-Tap Toggle Controls)
+                        lastTapTime = currentTime;
+                        toggleControls();
+                    }
+                }
+
+                if (ytGestureLayer) {
+                    ytGestureLayer.addEventListener('click', handleGestureTap);
+                }
+
                 if (ytOverlay) {
                     ytOverlay.addEventListener('click', (e) => {
-                        // If click is on one of the action buttons, let button handler deal with it
-                        if (e.target.closest('.yt-ctrl-btn')) {
+                        if (e.target && e.target.closest('.yt-ctrl-btn')) {
                             return;
                         }
-
-                        const rect = ytOverlay.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const width = rect.width;
-                        const tapRatio = x / width;
-                        const currentTime = new Date().getTime();
-                        const timeDiff = currentTime - lastTapTime;
-
-                        // Check Tap Region (Left 35%, Center 30%, Right 35%)
-                        if (tapRatio < 0.35) {
-                            // Left Side Tap
-                            if (timeDiff < 300 && timeDiff > 0) {
-                                // Double Tap Detected -> Cancel single tap, Seek Left
-                                clearTimeout(singleTapTimeout);
-                                handleSeekAnimation('left', 10);
-                                lastTapTime = currentTime;
-                            } else {
-                                // Potential single tap
-                                lastTapTime = currentTime;
-                                singleTapTimeout = setTimeout(() => {
-                                    toggleControls();
-                                }, 260);
-                            }
-                        } else if (tapRatio > 0.65) {
-                            // Right Side Tap
-                            if (timeDiff < 300 && timeDiff > 0) {
-                                // Double Tap Detected -> Cancel single tap, Seek Right
-                                clearTimeout(singleTapTimeout);
-                                handleSeekAnimation('right', 10);
-                                lastTapTime = currentTime;
-                            } else {
-                                // Potential single tap
-                                lastTapTime = currentTime;
-                                singleTapTimeout = setTimeout(() => {
-                                    toggleControls();
-                                }, 260);
-                            }
-                        } else {
-                            // Center Tap -> Instant Toggle Controls
-                            lastTapTime = currentTime;
-                            toggleControls();
-                        }
+                        handleGestureTap(e);
                     });
                 }
 
