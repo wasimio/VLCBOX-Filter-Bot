@@ -254,7 +254,7 @@ Nᴀᴍᴇ - {}"""
 <b>⚙️ sɪᴢᴇ : {file_size}</b>""" 
 
     TMDB_TEMPLATE_TXT = """
-<b>🔖 Tɪᴛᴛʟᴇ : <a href={url}>{title}</a>
+<b>🔖 Tɪᴛᴛʟᴇ : <a href="{url}">{title}</a>
 📆 Yᴇᴀʀ : {year}
 🌟 Rᴀᴛɪɴɢ : {rating} / 10
 🎭 Gᴇɴʀᴇs : {genres}

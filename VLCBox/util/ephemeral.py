@@ -10,6 +10,7 @@ groups and supergroups according to Telegram Bot API 10.2 / 10.3 standards.
 """
 
 import logging
+import re
 import aiohttp
 import asyncio
 from typing import Optional, Union, Dict, Any
@@ -32,9 +33,20 @@ def get_active_bot_token(client: Optional[Any] = None) -> str:
     return BOT_TOKEN
 
 
+def fix_telegram_html(text: str) -> str:
+    """
+    Clean up common HTML formatting inconsistencies for Telegram Bot API:
+    - Fix unquoted href attributes: <a href=http...> -> <a href="http...">
+    """
+    if not text or not isinstance(text, str):
+        return str(text) if text is not None else ""
+    return re.sub(r'<a\s+href=([^"\'>\s]+)>', r'<a href="\1">', text)
+
+
 def serialize_reply_markup(reply_markup: Optional[Union[InlineKeyboardMarkup, ReplyKeyboardMarkup, Dict[str, Any]]]) -> Optional[Dict[str, Any]]:
     """
     Convert Pyrogram InlineKeyboardMarkup / ReplyKeyboardMarkup into Telegram Bot API JSON structure.
+    Safely converts bytes to strings to prevent JSON serialization errors.
     """
     if not reply_markup:
         return None
@@ -47,17 +59,24 @@ def serialize_reply_markup(reply_markup: Optional[Union[InlineKeyboardMarkup, Re
         for row in reply_markup.inline_keyboard:
             serialized_row = []
             for btn in row:
-                btn_dict: Dict[str, Any] = {"text": btn.text}
+                text_val = btn.text.decode('utf-8', errors='ignore') if isinstance(btn.text, bytes) else str(btn.text)
+                btn_dict: Dict[str, Any] = {"text": text_val}
+
                 if hasattr(btn, "url") and btn.url:
-                    btn_dict["url"] = btn.url
-                elif hasattr(btn, "callback_data") and btn.callback_data:
-                    btn_dict["callback_data"] = btn.callback_data
+                    url_val = btn.url.decode('utf-8', errors='ignore') if isinstance(btn.url, bytes) else str(btn.url)
+                    btn_dict["url"] = url_val
+                elif hasattr(btn, "callback_data") and btn.callback_data is not None:
+                    cb_val = btn.callback_data
+                    if isinstance(cb_val, bytes):
+                        cb_val = cb_val.decode('utf-8', errors='ignore')
+                    btn_dict["callback_data"] = str(cb_val)
                 elif hasattr(btn, "web_app") and btn.web_app:
-                    btn_dict["web_app"] = {"url": btn.web_app.url}
+                    web_url = btn.web_app.url.decode('utf-8', errors='ignore') if isinstance(btn.web_app.url, bytes) else str(btn.web_app.url)
+                    btn_dict["web_app"] = {"url": web_url}
                 elif hasattr(btn, "switch_inline_query") and btn.switch_inline_query is not None:
-                    btn_dict["switch_inline_query"] = btn.switch_inline_query
+                    btn_dict["switch_inline_query"] = str(btn.switch_inline_query)
                 elif hasattr(btn, "switch_inline_query_current_chat") and btn.switch_inline_query_current_chat is not None:
-                    btn_dict["switch_inline_query_current_chat"] = btn.switch_inline_query_current_chat
+                    btn_dict["switch_inline_query_current_chat"] = str(btn.switch_inline_query_current_chat)
                 serialized_row.append(btn_dict)
             serialized_keyboard.append(serialized_row)
         return {"inline_keyboard": serialized_keyboard}
@@ -67,8 +86,10 @@ def serialize_reply_markup(reply_markup: Optional[Union[InlineKeyboardMarkup, Re
         for row in reply_markup.keyboard:
             serialized_row = []
             for btn in row:
-                btn_dict = {"text": btn.text if hasattr(btn, "text") else str(btn)}
-                serialized_row.append(btn_dict)
+                text_val = btn.text if hasattr(btn, "text") else str(btn)
+                if isinstance(text_val, bytes):
+                    text_val = text_val.decode('utf-8', errors='ignore')
+                serialized_row.append({"text": str(text_val)})
             serialized_keyboard.append(serialized_row)
         return {
             "keyboard": serialized_keyboard,
@@ -85,7 +106,7 @@ async def send_ephemeral(
     user_id: int,
     text: str,
     reply_markup: Optional[Union[InlineKeyboardMarkup, ReplyKeyboardMarkup, Dict[str, Any]]] = None,
-    parse_mode: str = "HTML",
+    parse_mode: Optional[str] = "HTML",
     disable_web_page_preview: bool = True,
     fallback_on_error: bool = True
 ) -> Dict[str, Any]:
@@ -143,16 +164,18 @@ async def send_ephemeral(
                 return {"success": False, "ephemeral": False, "fallback_sent": False, "error": str(e)}
         return {"success": False, "ephemeral": False, "fallback_sent": False, "error": "missing_token"}
 
+    clean_text = fix_telegram_html(text)
     api_url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload: Dict[str, Any] = {
         "chat_id": chat_id,
-        "text": text,
-        "parse_mode": parse_mode,
+        "text": clean_text,
         "disable_web_page_preview": disable_web_page_preview,
         "ephemeral_message_parameters": {
             "receiver_user_id": int(user_id)
         }
     }
+    if parse_mode:
+        payload["parse_mode"] = parse_mode
 
     serialized_markup = serialize_reply_markup(reply_markup)
     if serialized_markup:
@@ -167,42 +190,53 @@ async def send_ephemeral(
                 if data.get("ok"):
                     logger.info(f"EPHEMERAL: success - chat_id={chat_id}, user_id={user_id}")
                     return {"success": True, "ephemeral": True, "fallback_sent": False, "result": data.get("result")}
-                else:
-                    error_desc = data.get("description", "Unknown Telegram API Error")
-                    error_code = data.get("error_code", resp.status)
-                    logger.warning(f"EPHEMERAL: API error - code={error_code}, desc={error_desc}")
 
-                    if fallback_on_error and client:
-                        logger.info(f"EPHEMERAL: fallback - sending standard message to chat_id={chat_id}")
-                        try:
-                            sent = await client.send_message(
-                                chat_id=chat_id,
-                                text=text,
-                                reply_markup=reply_markup,
-                                disable_web_page_preview=disable_web_page_preview
-                            )
-                            return {
-                                "success": True,
-                                "ephemeral": False,
-                                "fallback_sent": True,
-                                "error": error_desc,
-                                "result": sent
-                            }
-                        except Exception as fb_err:
-                            logger.error(f"EPHEMERAL: fallback send failed - {fb_err}")
-                            return {
-                                "success": False,
-                                "ephemeral": False,
-                                "fallback_sent": False,
-                                "error": f"{error_desc} | fallback_error: {fb_err}"
-                            }
+                error_desc = data.get("description", "Unknown Telegram API Error")
+                error_code = data.get("error_code", resp.status)
+                logger.warning(f"EPHEMERAL: API error - code={error_code}, desc={error_desc}")
 
-                    return {
-                        "success": False,
-                        "ephemeral": False,
-                        "fallback_sent": False,
-                        "error": error_desc
-                    }
+                # If HTML entity parsing failed, retry once without parse_mode
+                if parse_mode and ("can't parse entities" in error_desc.lower() or "entity" in error_desc.lower()):
+                    logger.info(f"EPHEMERAL: HTML entity error, retrying without parse_mode")
+                    retry_payload = payload.copy()
+                    retry_payload.pop("parse_mode", None)
+                    async with session.post(api_url, json=retry_payload) as retry_resp:
+                        retry_data = await retry_resp.json()
+                        if retry_data.get("ok"):
+                            logger.info(f"EPHEMERAL: success on plain text retry - chat_id={chat_id}, user_id={user_id}")
+                            return {"success": True, "ephemeral": True, "fallback_sent": False, "result": retry_data.get("result")}
+
+                if fallback_on_error and client:
+                    logger.info(f"EPHEMERAL: fallback - sending standard message to chat_id={chat_id}")
+                    try:
+                        sent = await client.send_message(
+                            chat_id=chat_id,
+                            text=text,
+                            reply_markup=reply_markup,
+                            disable_web_page_preview=disable_web_page_preview
+                        )
+                        return {
+                            "success": True,
+                            "ephemeral": False,
+                            "fallback_sent": True,
+                            "error": error_desc,
+                            "result": sent
+                        }
+                    except Exception as fb_err:
+                        logger.error(f"EPHEMERAL: fallback send failed - {fb_err}")
+                        return {
+                            "success": False,
+                            "ephemeral": False,
+                            "fallback_sent": False,
+                            "error": f"{error_desc} | fallback_error: {fb_err}"
+                        }
+
+                return {
+                    "success": False,
+                    "ephemeral": False,
+                    "fallback_sent": False,
+                    "error": error_desc
+                }
 
     except asyncio.TimeoutError:
         logger.warning(f"EPHEMERAL: API error - request timed out for chat_id={chat_id}")
@@ -242,26 +276,28 @@ async def send_ephemeral_photo(
     photo: str,
     caption: str,
     reply_markup: Optional[Union[InlineKeyboardMarkup, ReplyKeyboardMarkup, Dict[str, Any]]] = None,
-    parse_mode: str = "HTML"
+    parse_mode: Optional[str] = "HTML"
 ) -> Dict[str, Any]:
     """
     Send an ephemeral photo with caption to a specific user inside a group or supergroup.
-    If sendPhoto fails, attempts fallback to ephemeral text.
+    If sendPhoto fails (e.g. invalid URL, dimension error, caption too long), attempts fallback to ephemeral text.
     """
     token = get_active_bot_token(client)
     if not token or not photo or len(caption) > 1024:
         return await send_ephemeral(client, chat_id, user_id, caption, reply_markup, parse_mode, fallback_on_error=False)
 
+    clean_caption = fix_telegram_html(caption)
     api_url = f"https://api.telegram.org/bot{token}/sendPhoto"
     payload: Dict[str, Any] = {
         "chat_id": chat_id,
         "photo": photo,
-        "caption": caption,
-        "parse_mode": parse_mode,
+        "caption": clean_caption,
         "ephemeral_message_parameters": {
             "receiver_user_id": int(user_id)
         }
     }
+    if parse_mode:
+        payload["parse_mode"] = parse_mode
 
     serialized_markup = serialize_reply_markup(reply_markup)
     if serialized_markup:
@@ -274,18 +310,30 @@ async def send_ephemeral_photo(
                 if data.get("ok"):
                     logger.info(f"EPHEMERAL: photo success - chat_id={chat_id}, user_id={user_id}")
                     return {"success": True, "ephemeral": True, "result": data.get("result")}
-                else:
-                    error_desc = data.get("description", "Unknown Telegram API Error")
-                    logger.warning(f"EPHEMERAL: sendPhoto API error - {error_desc}, falling back to ephemeral text")
-                    return await send_ephemeral(
-                        client=client,
-                        chat_id=chat_id,
-                        user_id=user_id,
-                        text=caption,
-                        reply_markup=reply_markup,
-                        parse_mode=parse_mode,
-                        fallback_on_error=False
-                    )
+
+                error_desc = data.get("description", "Unknown Telegram API Error")
+                logger.warning(f"EPHEMERAL: sendPhoto API error - {error_desc}, falling back to ephemeral text")
+
+                # If HTML entity error, retry photo once without parse_mode
+                if parse_mode and ("can't parse entities" in error_desc.lower() or "entity" in error_desc.lower()):
+                    retry_payload = payload.copy()
+                    retry_payload.pop("parse_mode", None)
+                    async with session.post(api_url, json=retry_payload) as retry_resp:
+                        retry_data = await retry_resp.json()
+                        if retry_data.get("ok"):
+                            logger.info(f"EPHEMERAL: photo success on plain text retry - chat_id={chat_id}, user_id={user_id}")
+                            return {"success": True, "ephemeral": True, "result": retry_data.get("result")}
+
+                # Fallback to ephemeral text delivery
+                return await send_ephemeral(
+                    client=client,
+                    chat_id=chat_id,
+                    user_id=user_id,
+                    text=caption,
+                    reply_markup=reply_markup,
+                    parse_mode=parse_mode,
+                    fallback_on_error=False
+                )
     except Exception as e:
         logger.warning(f"EPHEMERAL: sendPhoto network error - {e}, falling back to ephemeral text")
         return await send_ephemeral(
@@ -336,6 +384,18 @@ async def send_group_search_result(
                 reply_markup=reply_markup,
                 parse_mode="HTML"
             )
+            # If photo failed, try text ephemeral delivery before falling back to public!
+            if not ephemeral_res or not ephemeral_res.get("success"):
+                logger.warning(f"EPHEMERAL_SEARCH: photo ephemeral failed, attempting text ephemeral delivery")
+                ephemeral_res = await send_ephemeral(
+                    client=client,
+                    chat_id=chat_id,
+                    user_id=user_id,
+                    text=text,
+                    reply_markup=reply_markup,
+                    parse_mode="HTML",
+                    fallback_on_error=False
+                )
         else:
             ephemeral_res = await send_ephemeral(
                 client=client,
