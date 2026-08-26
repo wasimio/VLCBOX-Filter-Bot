@@ -133,7 +133,8 @@
             background: linear-gradient(0deg, rgba(9, 13, 22, 0.95) 0%, rgba(9, 13, 22, 0.4) 70%, transparent 100%) !important;
             padding: 16px 12px 10px 12px !important;
             gap: 4px !important;
-            z-index: 25 !important;
+            z-index: 40 !important;
+            pointer-events: auto !important;
             transition: opacity 0.3s ease, transform 0.3s ease !important;
         }
 
@@ -151,38 +152,33 @@
             }
         }
 
-        /* YouTube-Style Touch & Gesture Overlay */
-        .yt-touch-layer {
+        /* YouTube-Style Overlay (NO BLUR - Clean Crisp View) */
+        .yt-overlay-container {
             position: absolute;
             inset: 0;
-            z-index: 20;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            pointer-events: auto;
-            touch-action: manipulation;
-        }
-
-        /* YouTube Center Controls Hub */
-        .yt-center-controls {
-            position: absolute;
-            inset: 0;
-            z-index: 22;
+            z-index: 25;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 28px;
-            background: rgba(0, 0, 0, 0.38);
-            backdrop-filter: blur(2px);
+            background: rgba(0, 0, 0, 0.4);
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
             transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s;
         }
 
-        .yt-center-controls.active {
+        .yt-overlay-container.controls-visible {
             opacity: 1;
             visibility: visible;
+            pointer-events: auto;
+        }
+
+        /* YouTube Center Controls Hub */
+        .yt-center-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 28px;
             pointer-events: auto;
         }
 
@@ -191,19 +187,20 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(17, 24, 39, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(17, 24, 39, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             color: #ffffff;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             -webkit-tap-highlight-color: transparent;
+            pointer-events: auto;
         }
 
         .yt-ctrl-btn:hover {
-            background: rgba(99, 102, 241, 0.8);
-            border-color: rgba(99, 102, 241, 0.5);
+            background: rgba(99, 102, 241, 0.85);
+            border-color: rgba(99, 102, 241, 0.6);
             transform: scale(1.1);
         }
 
@@ -214,8 +211,8 @@
         .yt-play-btn {
             width: 64px;
             height: 64px;
-            background: rgba(99, 102, 241, 0.85);
-            border-color: rgba(255, 255, 255, 0.25);
+            background: rgba(99, 102, 241, 0.9);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
         .yt-seek-btn {
@@ -251,7 +248,7 @@
             color: #ffffff;
             opacity: 0;
             pointer-events: none;
-            z-index: 24;
+            z-index: 30;
             transition: opacity 0.25s ease-out;
         }
 
@@ -367,8 +364,36 @@
                     Your browser does not support HTML5 video playback.
                 </video>
 
-                <!-- YouTube-Style Touch Interaction & Double-Tap Layer -->
-                <div id="ytTouchLayer" class="yt-touch-layer"></div>
+                <!-- YouTube-Style Touch & Center Controls Layer (NO BLUR) -->
+                <div id="ytOverlay" class="yt-overlay-container">
+                    <div class="yt-center-controls">
+                        <!-- 10s Rewind Button -->
+                        <button id="btnCenterRewind" class="yt-ctrl-btn yt-seek-btn" aria-label="Rewind 10 seconds" title="Rewind 10s">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"/>
+                            </svg>
+                            <span class="text-[9px] font-bold leading-none mt-0.5">10</span>
+                        </button>
+
+                        <!-- Center Play/Pause Toggle -->
+                        <button id="btnCenterPlay" class="yt-ctrl-btn yt-play-btn" aria-label="Play or Pause video" title="Play/Pause">
+                            <svg id="iconPlay" class="w-8 h-8 translate-x-0.5 fill-current" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            <svg id="iconPause" class="w-8 h-8 fill-current hidden" viewBox="0 0 24 24">
+                                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                            </svg>
+                        </button>
+
+                        <!-- 10s Forward Button -->
+                        <button id="btnCenterForward" class="yt-ctrl-btn yt-seek-btn" aria-label="Forward 10 seconds" title="Forward 10s">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.934 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 005 8v8a1 1 0 001.6.8l5.334-4zM19.934 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"/>
+                            </svg>
+                            <span class="text-[9px] font-bold leading-none mt-0.5">10</span>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- YouTube-Style Double-Tap Left Seek Feedback -->
                 <div id="seekFeedbackLeft" class="yt-seek-feedback yt-seek-left">
@@ -386,37 +411,8 @@
                     <span id="seekValueRight" class="text-xs font-bold tracking-wider">+10 seconds</span>
                 </div>
 
-                <!-- YouTube-Style Center Floating Quick Controls -->
-                <div id="ytCenterControls" class="yt-center-controls">
-                    <!-- 10s Rewind Button -->
-                    <button id="btnCenterRewind" class="yt-ctrl-btn yt-seek-btn" aria-label="Rewind 10 seconds" title="Rewind 10s">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"/>
-                        </svg>
-                        <span class="text-[9px] font-bold leading-none mt-0.5">10</span>
-                    </button>
-
-                    <!-- Center Play/Pause Toggle -->
-                    <button id="btnCenterPlay" class="yt-ctrl-btn yt-play-btn" aria-label="Play or Pause video" title="Play/Pause">
-                        <svg id="iconPlay" class="w-8 h-8 translate-x-0.5 fill-current" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z"/>
-                        </svg>
-                        <svg id="iconPause" class="w-8 h-8 fill-current hidden" viewBox="0 0 24 24">
-                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                        </svg>
-                    </button>
-
-                    <!-- 10s Forward Button -->
-                    <button id="btnCenterForward" class="yt-ctrl-btn yt-seek-btn" aria-label="Forward 10 seconds" title="Forward 10s">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.934 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 005 8v8a1 1 0 001.6.8l5.334-4zM19.934 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"/>
-                        </svg>
-                        <span class="text-[9px] font-bold leading-none mt-0.5">10</span>
-                    </button>
-                </div>
-
                 <!-- Clean Video Fallback / Error State -->
-                <div id="videoErrorOverlay" class="hidden absolute inset-0 bg-dark-bg/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30">
+                <div id="videoErrorOverlay" class="hidden absolute inset-0 bg-dark-bg/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-35">
                     <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     </div>
@@ -426,6 +422,10 @@
                         <button onclick="vlc_player()" class="px-4 py-2.5 rounded-xl bg-brand-vlc/20 text-brand-vlc border border-brand-vlc/30 hover:bg-brand-vlc/30 text-xs font-semibold transition-colors flex items-center gap-2">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" alt="VLC" class="w-4 h-4">
                             Open in VLC
+                        </button>
+                        <button onclick="mx_player()" class="px-4 py-2.5 rounded-xl bg-brand-mx/20 text-brand-mx border border-brand-mx/30 hover:bg-brand-mx/30 text-xs font-semibold transition-colors flex items-center gap-2">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/MX_Player_logo.svg" alt="MX" class="w-4 h-4">
+                            Open in MX Player
                         </button>
                         <button onclick="Download()" class="px-4 py-2.5 rounded-xl bg-brand-500 text-white hover:bg-brand-600 text-xs font-semibold transition-colors flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a1 1 0 001 1h14a1 1 0 001-1v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -479,7 +479,7 @@
             </div>
         </section>
 
-        <!-- External Players Section ("Open with") -->
+        <!-- External Players Section (VLC & MX Player Only) -->
         <section class="space-y-3">
             <div class="flex items-center justify-between px-1">
                 <h2 class="font-heading text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
@@ -489,54 +489,28 @@
                 <span class="text-[11px] text-slate-500">Tap to launch app</span>
             </div>
 
-            <!-- Compact Grid / Scrollable Bar -->
-            <div class="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+            <!-- Two-Button Responsive Player Grid -->
+            <div class="grid grid-cols-2 gap-3 sm:gap-4">
                 <!-- VLC Player -->
-                <button onclick="vlc_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-brand-vlc/50" aria-label="Open with VLC Player">
-                    <div class="w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" alt="VLC" class="w-7 h-7 object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<svg class=\'w-6 h-6 text-amber-500\' fill=\'currentColor\' viewBox=\'0 0 24 24\'><path d=\'M12 2L1 21h22L12 2zm0 4.25l7.5 13.25h-15L12 6.25z\'/></svg>'">
+                <button onclick="vlc_player()" class="vlc-card-interactive p-4 sm:p-5 flex items-center justify-center sm:justify-start gap-3.5 group focus:outline-none focus:ring-2 focus:ring-brand-vlc/50" aria-label="Open in VLC Player">
+                    <div class="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" alt="VLC" class="w-7 h-7 object-contain">
                     </div>
-                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">VLC</span>
+                    <div class="text-left">
+                        <div class="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">VLC Player</div>
+                        <div class="text-[11px] text-slate-400 hidden sm:block">Play in VLC Media Player</div>
+                    </div>
                 </button>
 
                 <!-- MX Player -->
-                <button onclick="mx_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-brand-mx/50" aria-label="Open with MX Player">
-                    <div class="w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <img src="https://vlcbox.v_vlcbox.li/assets/mx.png" alt="MX" class="w-7 h-7 object-contain" onerror="this.onerror=null; this.src='https://i.ibb.co/L5QyZp0/mx.png';">
+                <button onclick="mx_player()" class="vlc-card-interactive p-4 sm:p-5 flex items-center justify-center sm:justify-start gap-3.5 group focus:outline-none focus:ring-2 focus:ring-brand-mx/50" aria-label="Open in MX Player">
+                    <div class="w-11 h-11 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/MX_Player_logo.svg" alt="MX Player" class="w-7 h-7 object-contain">
                     </div>
-                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">MX Player</span>
-                </button>
-
-                <!-- PlayIt Player -->
-                <button onclick="playit_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-cyan-500/50" aria-label="Open with PlayIt Player">
-                    <div class="w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <img src="https://vlcbox.v_vlcbox.li/assets/playit.png" alt="PlayIt" class="w-7 h-7 object-contain" onerror="this.onerror=null; this.src='https://i.ibb.co/K2T3L0p/playit.png';">
+                    <div class="text-left">
+                        <div class="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">MX Player</div>
+                        <div class="text-[11px] text-slate-400 hidden sm:block">Play in MX Player App</div>
                     </div>
-                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">PlayIt</span>
-                </button>
-
-                <!-- KM Player -->
-                <button onclick="km_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-purple-500/50" aria-label="Open with KM Player">
-                    <div class="w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <img src="https://vlcbox.v_vlcbox.li/assets/km.png" alt="KM" class="w-7 h-7 object-contain" onerror="this.onerror=null; this.src='https://i.ibb.co/0XgY1m0/km.png';">
-                    </div>
-                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">KMPlayer</span>
-                </button>
-
-                <!-- S Player -->
-                <button onclick="s_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-blue-500/50" aria-label="Open with S Player">
-                    <div class="w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <img src="https://vlcbox.v_vlcbox.li/assets/splayer.png" alt="S Player" class="w-7 h-7 object-contain" onerror="this.onerror=null; this.src='https://i.ibb.co/wL8XG40/splayer.png';">
-                    </div>
-                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">S Player</span>
-                </button>
-
-                <!-- HD Player -->
-                <button onclick="hd_player()" class="vlc-card-interactive p-3 flex flex-col items-center justify-center gap-2 text-center group focus:outline-none focus:ring-2 focus:ring-rose-500/50" aria-label="Open with HD Player">
-                    <div class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white">HD Player</span>
                 </button>
             </div>
         </section>
@@ -550,7 +524,7 @@
                 <div class="space-y-1">
                     <h3 class="font-heading text-xs font-bold uppercase tracking-wider text-slate-200">Playback Compatibility</h3>
                     <p class="text-xs text-slate-400 leading-relaxed">
-                        If audio plays without video or buffering occurs, your browser may lack specific video codecs. Tap any <b>External Player</b> button above for seamless playback.
+                        If audio plays without video or buffering occurs, your browser may lack specific video codecs. Tap <b>VLC</b> or <b>MX Player</b> above for seamless playback.
                     </p>
                 </div>
             </div>
@@ -599,8 +573,9 @@
     <!-- Scripts -->
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
-        // Intent Link Derivation Logic - EXACT MATCH with existing backend requirement
-        const Link = window.location.href.replace("/watch/", "/");
+        // Intent Link Derivation Logic
+        const rawUrl = "{{ file_url }}";
+        const Link = rawUrl && rawUrl.length > 5 ? rawUrl : window.location.href.replace("/watch/", "/");
 
         // Toast Notification System
         let toastTimeout;
@@ -617,31 +592,33 @@
             }, 2500);
         }
 
-        // External Player Dispatchers
+        // External Player Dispatchers (Reliable Android Intent + Custom Schemes)
         function vlc_player() {
             showToast("Opening VLC Player...");
-            window.location.href = `vlc://${Link}`;
+            const vlcIntent = `intent:${Link}#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;end`;
+            const vlcUri = `vlc://${Link}`;
+
+            if (/Android/i.test(navigator.userAgent)) {
+                window.location.href = vlcIntent;
+                setTimeout(() => {
+                    window.location.href = vlcUri;
+                }, 1000);
+            } else {
+                window.location.href = vlcUri;
+            }
         }
+
         function mx_player() {
             showToast("Opening MX Player...");
-            window.location.href = `intent:${Link}#Intent;package=com.mxtech.videoplayer.ad;end`;
+            const mxIntent = `intent:${Link}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.ad;end`;
+            window.location.href = mxIntent;
         }
-        function playit_player() {
-            showToast("Opening PlayIt...");
-            window.location.href = `playit://playerv2/video?url=${Link}`;
-        }
-        function s_player() {
-            showToast("Opening S Player...");
-            window.location.href = `intent:${Link}#Intent;action=com.young.simple.player.playback_online;package=com.young.simple.player;end`;
-        }
-        function km_player() {
-            showToast("Opening KMPlayer...");
-            window.location.href = `intent:${Link}#Intent;package=com.kmplayer;end`;
-        }
-        function hd_player() {
-            showToast("Opening HD Player...");
-            window.location.href = `intent:${Link}#Intent;package=uplayer.video.player;end`;
-        }
+
+        // Legacy Player Fallbacks (preserved for backward compatibility)
+        function playit_player() { window.location.href = `playit://playerv2/video?url=${Link}`; }
+        function s_player() { window.location.href = `intent:${Link}#Intent;action=com.young.simple.player.playback_online;package=com.young.simple.player;end`; }
+        function km_player() { window.location.href = `intent:${Link}#Intent;package=com.kmplayer;end`; }
+        function hd_player() { window.location.href = `intent:${Link}#Intent;package=uplayer.video.player;end`; }
         function Download() {
             showToast("Starting Download...");
             window.location.href = Link;
@@ -705,8 +682,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const videoElem = document.getElementById('player');
             const errorOverlay = document.getElementById('videoErrorOverlay');
-            const touchLayer = document.getElementById('ytTouchLayer');
-            const centerControls = document.getElementById('ytCenterControls');
+            const ytOverlay = document.getElementById('ytOverlay');
             const btnCenterPlay = document.getElementById('btnCenterPlay');
             const btnCenterRewind = document.getElementById('btnCenterRewind');
             const btnCenterForward = document.getElementById('btnCenterForward');
@@ -726,7 +702,7 @@
             let seekResetTimeoutLeft = null;
             let seekResetTimeoutRight = null;
 
-            // Responsive Controls Setup
+            // Responsive Controls Setup for Plyr
             const isMobileScreen = window.innerWidth < 640;
             const plyrControls = isMobileScreen 
                 ? ['progress', 'current-time', 'duration', 'mute', 'settings', 'pip', 'fullscreen']
@@ -739,7 +715,7 @@
                     tooltips: { controls: true, seek: true },
                     keyboard: { focused: true, global: true },
                     resetOnEnd: true,
-                    clickToPlay: false // Handled by our custom touch/click engine
+                    clickToPlay: false
                 });
 
                 // Error Event
@@ -765,16 +741,16 @@
 
                 playerInstance.on('pause', () => {
                     updateCenterPlayIcon(false);
-                    showCenterControls(true); // Keep controls visible when paused
+                    showControls(true); // Keep controls visible when paused
                 });
 
                 playerInstance.on('ended', () => {
                     updateCenterPlayIcon(false);
-                    showCenterControls(true);
+                    showControls(true);
                 });
 
                 playerInstance.on('seeking', () => {
-                    showCenterControls(true);
+                    showControls(true);
                 });
 
                 // Center Button Event Handlers
@@ -803,27 +779,27 @@
                 }
 
                 // Controls Visibility Controls
-                function showCenterControls(keepVisible = false) {
-                    if (!centerControls) return;
-                    centerControls.classList.add('active');
+                function showControls(keepVisible = false) {
+                    if (!ytOverlay) return;
+                    ytOverlay.classList.add('controls-visible');
                     clearTimeout(hideControlsTimeout);
-                    if (!keepVisible && playerInstance.playing) {
+                    if (!keepVisible && playerInstance && playerInstance.playing) {
                         startAutoHideTimer();
                     }
                 }
 
-                function hideCenterControls() {
-                    if (!centerControls) return;
+                function hideControls() {
+                    if (!ytOverlay) return;
                     if (playerInstance && playerInstance.playing) {
-                        centerControls.classList.remove('active');
+                        ytOverlay.classList.remove('controls-visible');
                     }
                 }
 
                 function startAutoHideTimer() {
                     clearTimeout(hideControlsTimeout);
                     hideControlsTimeout = setTimeout(() => {
-                        hideCenterControls();
-                    }, 2800);
+                        hideControls();
+                    }, 2600);
                 }
 
                 // Double-Tap Seek with Multi-Tap Accumulation
@@ -861,10 +837,15 @@
                     }
                 }
 
-                // Touch / Click Dispatcher with Smart Tap/Double-Tap Detection
-                if (touchLayer) {
-                    touchLayer.addEventListener('click', (e) => {
-                        const rect = touchLayer.getBoundingClientRect();
+                // Touch / Click Dispatcher on Overlay
+                if (ytOverlay) {
+                    ytOverlay.addEventListener('click', (e) => {
+                        // If click is on one of the action buttons, let button handler deal with it
+                        if (e.target.closest('.yt-ctrl-btn')) {
+                            return;
+                        }
+
+                        const rect = ytOverlay.getBoundingClientRect();
                         const x = e.clientX - rect.left;
                         const width = rect.width;
                         const tapRatio = x / width;
@@ -884,7 +865,7 @@
                                 lastTapTime = currentTime;
                                 singleTapTimeout = setTimeout(() => {
                                     toggleControls();
-                                }, 280);
+                                }, 260);
                             }
                         } else if (tapRatio > 0.65) {
                             // Right Side Tap
@@ -898,7 +879,7 @@
                                 lastTapTime = currentTime;
                                 singleTapTimeout = setTimeout(() => {
                                     toggleControls();
-                                }, 280);
+                                }, 260);
                             }
                         } else {
                             // Center Tap -> Instant Toggle Controls
@@ -909,17 +890,17 @@
                 }
 
                 function toggleControls() {
-                    if (centerControls.classList.contains('active')) {
+                    if (ytOverlay.classList.contains('controls-visible')) {
                         if (playerInstance.playing) {
-                            hideCenterControls();
+                            hideControls();
                         }
                     } else {
-                        showCenterControls();
+                        showControls();
                     }
                 }
 
                 // Show controls initially
-                showCenterControls(true);
+                showControls(true);
             }
 
             // Title Truncation for ultra-long names
