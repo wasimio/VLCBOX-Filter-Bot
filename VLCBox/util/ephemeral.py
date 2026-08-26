@@ -249,7 +249,7 @@ async def send_ephemeral_photo(
     If sendPhoto fails, attempts fallback to ephemeral text.
     """
     token = get_active_bot_token(client)
-    if not token:
+    if not token or not photo or len(caption) > 1024:
         return await send_ephemeral(client, chat_id, user_id, caption, reply_markup, parse_mode, fallback_on_error=False)
 
     api_url = f"https://api.telegram.org/bot{token}/sendPhoto"

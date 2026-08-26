@@ -2406,21 +2406,39 @@ async def cb_handler(client: Client, query: CallbackQuery):
         )
     elif query.data.startswith("setgs"):
         ident, set_type, status, grp_id = query.data.split("#")
-        grpid = await active_connection(str(query.from_user.id))
+        userid = query.from_user.id if query.from_user else None
 
-        if str(grp_id) != str(grpid):
-            await query.message.edit("Yᴏᴜʀ Aᴄᴛɪᴠᴇ Cᴏɴɴᴇᴄᴛɪᴏɴ Hᴀs Bᴇᴇɴ Cʜᴀɴɢᴇᴅ. Gᴏ Tᴏ /connections ᴀɴᴅ ᴄʜᴀɴɢᴇ ʏᴏᴜʀ ᴀᴄᴛɪᴠᴇ ᴄᴏɴɴᴇᴄᴛɪᴏɴ.")
-            return await query.answer(MSG_ALRT)
+        # Verify admin permissions for target group
+        try:
+            st = await client.get_chat_member(int(grp_id), userid)
+            is_admin = (
+                st.status in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]
+                or userid in ADMINS
+                or str(userid) in ADMINS
+            )
+        except Exception:
+            is_admin = userid in ADMINS or str(userid) in ADMINS
+
+        if not is_admin:
+            return await query.answer("Yᴏᴜ Dᴏɴ'ᴛ Hᴀᴠᴇ Tʜᴇ Rɪɢʜᴛs Tᴏ Dᴏ Tʜɪs !", show_alert=True)
+
+        if query.message.chat.type == enums.ChatType.PRIVATE:
+            grpid = await active_connection(str(query.from_user.id))
+            if grpid and str(grp_id) != str(grpid):
+                await query.message.edit("Yᴏᴜʀ Aᴄᴛɪᴠᴇ Cᴏɴɴᴇᴄᴛɪᴏɴ Hᴀs Bᴇᴇɴ Cʜᴀɴɢᴇᴅ. Gᴏ Tᴏ /connections ᴀɴᴅ ᴄʜᴀɴɢᴇ ʏᴏᴜʀ ᴀᴄᴛɪᴠᴇ ᴄᴏɴɴᴇᴄᴛɪᴏɴ.")
+                return await query.answer(MSG_ALRT)
+
+        target_id = int(grp_id)
 
         if status == "True":
-            await save_group_settings(grpid, set_type, False)
+            await save_group_settings(target_id, set_type, False)
         else:
-            settings = await get_settings(grpid)
-            if set_type == "is_shortlink" and not settings['shortlink']:
-                return await query.answer(text = "First Add Your Shortlink Url And Api By /shortlink Command, Then Turn Me On.", show_alert = True)
-            await save_group_settings(grpid, set_type, True)
+            settings = await get_settings(target_id)
+            if set_type == "is_shortlink" and not settings.get('shortlink'):
+                return await query.answer(text="First Add Your Shortlink Url And Api By /shortlink Command, Then Turn Me On.", show_alert=True)
+            await save_group_settings(target_id, set_type, True)
 
-        settings = await get_settings(grpid)
+        settings = await get_settings(target_id)
 
         if settings is not None:
             buttons = [
