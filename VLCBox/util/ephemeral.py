@@ -462,8 +462,7 @@ async def edit_ephemeral_reply_markup(
     payload: Dict[str, Any] = {
         "chat_id": chat_id,
         "receiver_user_id": int(user_id),
-        "ephemeral_message_id": int(message_id),
-        "message_id": int(message_id)
+        "ephemeral_message_id": int(message_id)
     }
     serialized_markup = serialize_reply_markup(reply_markup)
     if serialized_markup:
@@ -509,7 +508,6 @@ async def edit_ephemeral_text(
         "chat_id": chat_id,
         "receiver_user_id": int(user_id),
         "ephemeral_message_id": int(message_id),
-        "message_id": int(message_id),
         "text": clean_text,
         "disable_web_page_preview": disable_web_page_preview
     }
@@ -569,7 +567,6 @@ async def edit_ephemeral_caption(
         "chat_id": chat_id,
         "receiver_user_id": int(user_id),
         "ephemeral_message_id": int(message_id),
-        "message_id": int(message_id),
         "caption": clean_caption
     }
     if parse_mode:
