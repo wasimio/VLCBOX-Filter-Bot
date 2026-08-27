@@ -96,7 +96,7 @@ async def next_page(bot, query):
         offset = int(offset)
     except:
         offset = 0
-    search = FRESH.get(key, "")
+    search = BUTTONS.get(key) or FRESH.get(key, "")
     chat_id = query.message.chat.id if (query.message and getattr(query.message, "chat", None)) else int(key.rsplit("-", 1)[0])
 
     files, n_offset, total = await get_search_results(chat_id, search, offset=offset, filter=True)
@@ -771,6 +771,7 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
         seas_full0 = f"season {season_num:02d}"
         seas_sn = f"s{season_num}"
 
+        BUTTONS[key] = f"{base_search} {seas}".strip()
         seen_ids = set()
         files = []
         for term in [seas_s, seas_full, seas_full0, seas_sn]:
