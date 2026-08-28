@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from typing import Optional, Union, Dict, Any
 from pyrogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup
 from pyrogram import enums
+from pyrogram.errors import MessageNotModified
 from info import EPHEMERAL_GROUP_MESSAGES, EXPERIMENTAL_BOT_TOKEN, BOT_TOKEN
 from utils import get_settings
 
@@ -427,8 +428,8 @@ async def edit_ephemeral_reply_markup(
     reply_markup: Optional[Union[InlineKeyboardMarkup, ReplyKeyboardMarkup, Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """
-    Direct Telegram Bot API call to edit the inline keyboard of an ephemeral message.
-    Tries editEphemeralMessageReplyMarkup first, then editMessageReplyMarkup with ephemeral_message_parameters.
+    Direct Telegram Bot API call to edit the inline keyboard of a message.
+    Tries standard editMessageReplyMarkup first, then ephemeral endpoints.
     """
     token = get_active_bot_token(client)
     if not token:
@@ -437,11 +438,9 @@ async def edit_ephemeral_reply_markup(
     serialized_markup = serialize_reply_markup(reply_markup)
     endpoints = [
         (
-            f"https://api.telegram.org/bot{token}/editEphemeralMessageReplyMarkup",
+            f"https://api.telegram.org/bot{token}/editMessageReplyMarkup",
             {
                 "chat_id": chat_id,
-                "receiver_user_id": int(user_id),
-                "ephemeral_message_id": int(message_id),
                 "message_id": int(message_id),
                 "reply_markup": serialized_markup
             }
@@ -454,6 +453,16 @@ async def edit_ephemeral_reply_markup(
                 "ephemeral_message_parameters": {
                     "receiver_user_id": int(user_id)
                 },
+                "reply_markup": serialized_markup
+            }
+        ),
+        (
+            f"https://api.telegram.org/bot{token}/editEphemeralMessageReplyMarkup",
+            {
+                "chat_id": chat_id,
+                "receiver_user_id": int(user_id),
+                "ephemeral_message_id": int(message_id),
+                "message_id": int(message_id),
                 "reply_markup": serialized_markup
             }
         )
@@ -487,8 +496,8 @@ async def edit_ephemeral_text(
     disable_web_page_preview: bool = True
 ) -> Dict[str, Any]:
     """
-    Direct Telegram Bot API call to edit the text of an ephemeral message.
-    Tries editEphemeralMessageText first, then editMessageText with ephemeral_message_parameters.
+    Direct Telegram Bot API call to edit the text of a message.
+    Tries standard editMessageText first, then ephemeral endpoints.
     """
     token = get_active_bot_token(client)
     if not token:
@@ -499,11 +508,9 @@ async def edit_ephemeral_text(
 
     endpoints = [
         (
-            f"https://api.telegram.org/bot{token}/editEphemeralMessageText",
+            f"https://api.telegram.org/bot{token}/editMessageText",
             {
                 "chat_id": chat_id,
-                "receiver_user_id": int(user_id),
-                "ephemeral_message_id": int(message_id),
                 "message_id": int(message_id),
                 "text": clean_text,
                 "disable_web_page_preview": disable_web_page_preview,
@@ -522,6 +529,19 @@ async def edit_ephemeral_text(
                 "ephemeral_message_parameters": {
                     "receiver_user_id": int(user_id)
                 },
+                "reply_markup": serialized_markup
+            }
+        ),
+        (
+            f"https://api.telegram.org/bot{token}/editEphemeralMessageText",
+            {
+                "chat_id": chat_id,
+                "receiver_user_id": int(user_id),
+                "ephemeral_message_id": int(message_id),
+                "message_id": int(message_id),
+                "text": clean_text,
+                "disable_web_page_preview": disable_web_page_preview,
+                "parse_mode": parse_mode,
                 "reply_markup": serialized_markup
             }
         )
@@ -563,8 +583,8 @@ async def edit_ephemeral_caption(
     parse_mode: Optional[str] = "HTML"
 ) -> Dict[str, Any]:
     """
-    Direct Telegram Bot API call to edit the caption of an ephemeral photo/media message.
-    Tries editEphemeralMessageCaption first, then editMessageCaption with ephemeral_message_parameters.
+    Direct Telegram Bot API call to edit the caption of a photo/media message.
+    Tries standard editMessageCaption first, then ephemeral endpoints.
     """
     token = get_active_bot_token(client)
     if not token:
@@ -575,11 +595,9 @@ async def edit_ephemeral_caption(
 
     endpoints = [
         (
-            f"https://api.telegram.org/bot{token}/editEphemeralMessageCaption",
+            f"https://api.telegram.org/bot{token}/editMessageCaption",
             {
                 "chat_id": chat_id,
-                "receiver_user_id": int(user_id),
-                "ephemeral_message_id": int(message_id),
                 "message_id": int(message_id),
                 "caption": clean_caption,
                 "parse_mode": parse_mode,
@@ -596,6 +614,18 @@ async def edit_ephemeral_caption(
                 "ephemeral_message_parameters": {
                     "receiver_user_id": int(user_id)
                 },
+                "reply_markup": serialized_markup
+            }
+        ),
+        (
+            f"https://api.telegram.org/bot{token}/editEphemeralMessageCaption",
+            {
+                "chat_id": chat_id,
+                "receiver_user_id": int(user_id),
+                "ephemeral_message_id": int(message_id),
+                "message_id": int(message_id),
+                "caption": clean_caption,
+                "parse_mode": parse_mode,
                 "reply_markup": serialized_markup
             }
         )
@@ -639,25 +669,56 @@ async def update_result_message(
     """
     Unified result message editing abstraction.
 
-    - NORMAL RESULT: Uses existing Pyrogram message editing.
-    - EPHEMERAL RESULT: Uses direct Telegram Bot API ephemeral edit methods.
-    - Phase 14: Does NOT fall back to duplicate public messages on ephemeral edit error.
+    1. Attempts native Pyrogram MTProto editing first.
+    2. If MTProto raises any error (or on ephemeral messages), falls back to direct Telegram Bot API HTTP editing.
+    3. Handles both Photo captions, Text messages, and Reply Markup only updates.
     """
+    content_text = caption or text
+    markup = reply_markup if isinstance(reply_markup, InlineKeyboardMarkup) else (InlineKeyboardMarkup(reply_markup) if reply_markup else None)
+    msg = getattr(query, "message", None)
+
+    # 1. First attempt: Native Pyrogram MTProto editing
+    if msg:
+        try:
+            if content_text:
+                if getattr(msg, "photo", None):
+                    await msg.edit_caption(
+                        caption=content_text,
+                        reply_markup=markup,
+                        parse_mode=enums.ParseMode.HTML if parse_mode == "HTML" else None
+                    )
+                else:
+                    await msg.edit_text(
+                        text=content_text,
+                        reply_markup=markup,
+                        disable_web_page_preview=True,
+                        parse_mode=enums.ParseMode.HTML if parse_mode == "HTML" else None
+                    )
+            else:
+                await query.edit_message_reply_markup(reply_markup=markup)
+            return True
+        except MessageNotModified:
+            return True
+        except Exception as e:
+            if "MESSAGE_NOT_MODIFIED" in str(e):
+                return True
+            logger.warning(f"UPDATE_RESULT: native Pyrogram edit failed ({e}), attempting direct Bot API edit")
+
+    # 2. Second attempt: Direct Telegram Bot API HTTP editing
     ctx = await extract_callback_context(query, key=search_key)
+    chat_id = ctx.chat_id or (msg.chat.id if msg and getattr(msg, "chat", None) else 0)
+    message_id = ctx.message_id or (msg.id if msg else 0)
+    user_id = ctx.receiver_user_id
 
-    if ctx.is_ephemeral:
-        logger.info(f"EPHEMERAL_CALLBACK: attempt edit - chat_id={ctx.chat_id}, user_id={ctx.receiver_user_id}, msg_id={ctx.ephemeral_message_id}")
-
-        content_text = caption or text
+    if chat_id and message_id:
         res = None
-
         if content_text:
-            # Try caption edit first (for poster photos), then text edit
+            # Try caption first (for poster photos), then text edit
             res = await edit_ephemeral_caption(
                 client=client,
-                chat_id=ctx.chat_id,
-                user_id=ctx.receiver_user_id,
-                message_id=ctx.ephemeral_message_id,
+                chat_id=chat_id,
+                user_id=user_id,
+                message_id=message_id,
                 caption=content_text,
                 reply_markup=reply_markup,
                 parse_mode=parse_mode
@@ -665,9 +726,9 @@ async def update_result_message(
             if not res.get("success"):
                 res = await edit_ephemeral_text(
                     client=client,
-                    chat_id=ctx.chat_id,
-                    user_id=ctx.receiver_user_id,
-                    message_id=ctx.ephemeral_message_id,
+                    chat_id=chat_id,
+                    user_id=user_id,
+                    message_id=message_id,
                     text=content_text,
                     reply_markup=reply_markup,
                     parse_mode=parse_mode
@@ -675,79 +736,19 @@ async def update_result_message(
         else:
             res = await edit_ephemeral_reply_markup(
                 client=client,
-                chat_id=ctx.chat_id,
-                user_id=ctx.receiver_user_id,
-                message_id=ctx.ephemeral_message_id,
+                chat_id=chat_id,
+                user_id=user_id,
+                message_id=message_id,
                 reply_markup=reply_markup
             )
 
         if res and res.get("success"):
-            logger.info(f"EPHEMERAL_CALLBACK: success - chat_id={ctx.chat_id}, user_id={ctx.receiver_user_id}")
             return True
-
-        # If direct Bot API failed, try Pyrogram standard edit as a secondary attempt
-        try:
-            markup = reply_markup if isinstance(reply_markup, InlineKeyboardMarkup) else (InlineKeyboardMarkup(reply_markup) if reply_markup else None)
-            msg = getattr(query, "message", None)
-            if msg:
-                if content_text:
-                    if getattr(msg, "photo", None):
-                        await msg.edit_caption(
-                            caption=content_text,
-                            reply_markup=markup,
-                            parse_mode=enums.ParseMode.HTML if parse_mode == "HTML" else None
-                        )
-                    else:
-                        await msg.edit_text(
-                            text=content_text,
-                            reply_markup=markup,
-                            disable_web_page_preview=True,
-                            parse_mode=enums.ParseMode.HTML if parse_mode == "HTML" else None
-                        )
-                else:
-                    await query.edit_message_reply_markup(reply_markup=markup)
-                return True
-        except Exception:
-            pass
 
         err_msg = res.get("error", "Unknown error") if res else "No response"
-        logger.error(f"EPHEMERAL_CALLBACK: ephemeral edit failed ({err_msg}) for chat_id={ctx.chat_id}, user_id={ctx.receiver_user_id}")
-        return False
+        logger.error(f"UPDATE_RESULT: direct Bot API edit failed ({err_msg}) for chat_id={chat_id}, msg_id={message_id}")
 
-    # Standard / Normal / Public Edit path
-    try:
-        content_text = caption or text
-        markup = reply_markup if isinstance(reply_markup, InlineKeyboardMarkup) else (InlineKeyboardMarkup(reply_markup) if reply_markup else None)
-        msg = getattr(query, "message", None)
-        if not msg:
-            logger.error("EPHEMERAL_CALLBACK: standard edit failed - query.message is None")
-            return False
-
-        if content_text:
-            if getattr(msg, "photo", None):
-                await msg.edit_caption(
-                    caption=content_text,
-                    reply_markup=markup,
-                    parse_mode=enums.ParseMode.HTML if parse_mode == "HTML" else None
-                )
-            else:
-                await msg.edit_text(
-                    text=content_text,
-                    reply_markup=markup,
-                    disable_web_page_preview=True,
-                    parse_mode=enums.ParseMode.HTML if parse_mode == "HTML" else None
-                )
-        else:
-            await query.edit_message_reply_markup(
-                reply_markup=markup
-            )
-        return True
-    except Exception as e:
-        from pyrogram.errors import MessageNotModified
-        if isinstance(e, MessageNotModified) or "MESSAGE_NOT_MODIFIED" in str(e):
-            return True
-        logger.error(f"EPHEMERAL_CALLBACK: standard edit error - {e}")
-        return False
+    return False
 
 
 # Backward compatibility alias
