@@ -172,6 +172,14 @@ async def extract_callback_context(query: Any, key: Optional[str] = None) -> Eph
         except Exception:
             pass
 
+    if not message_id and key:
+        try:
+            from utils import temp
+            if key in temp.EPHEMERAL_MSG_IDS:
+                message_id = temp.EPHEMERAL_MSG_IDS[key]
+        except Exception as e:
+            logger.warning(f"EPHEMERAL: failed to extract message_id from temp.EPHEMERAL_MSG_IDS: {e}")
+
     is_group = False
     if chat_id < 0:
         is_group = True
@@ -462,7 +470,6 @@ async def edit_ephemeral_reply_markup(
                 "chat_id": chat_id,
                 "receiver_user_id": int(user_id),
                 "ephemeral_message_id": int(message_id),
-                "message_id": int(message_id),
                 "reply_markup": serialized_markup
             }
         )
@@ -538,7 +545,6 @@ async def edit_ephemeral_text(
                 "chat_id": chat_id,
                 "receiver_user_id": int(user_id),
                 "ephemeral_message_id": int(message_id),
-                "message_id": int(message_id),
                 "text": clean_text,
                 "disable_web_page_preview": disable_web_page_preview,
                 "parse_mode": parse_mode,
@@ -623,7 +629,6 @@ async def edit_ephemeral_caption(
                 "chat_id": chat_id,
                 "receiver_user_id": int(user_id),
                 "ephemeral_message_id": int(message_id),
-                "message_id": int(message_id),
                 "caption": clean_caption,
                 "parse_mode": parse_mode,
                 "reply_markup": serialized_markup

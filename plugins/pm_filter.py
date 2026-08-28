@@ -2537,6 +2537,9 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
         settings=settings
     )
 
+    if isinstance(result_msg, dict) and "message_id" in result_msg:
+        temp.EPHEMERAL_MSG_IDS[key] = result_msg["message_id"]
+
     if result_msg and hasattr(result_msg, "delete") and settings.get('auto_delete', False):
         try:
             await asyncio.sleep(300)
