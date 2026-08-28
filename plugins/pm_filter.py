@@ -20,6 +20,7 @@ from database.gfilters_mdb import find_gfilter, get_gfilters, del_allg
 from urllib.parse import quote_plus
 from VLCBox.util.file_properties import get_name, get_hash, get_media_file_size
 from VLCBox.util.ephemeral import send_group_search_result, update_result_message, edit_result_message, log_callback_debug
+from VLCBox.util.rich_ui import format_rich_movie_result, send_rich_search_result
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
@@ -2527,24 +2528,45 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
     if imdb and imdb.get('poster'):
         poster = imdb.get('poster')
 
-    result_msg = await send_group_search_result(
-        client=client,
-        message=message,
-        reply_msg=reply_msg,
-        text=cap,
-        photo=poster,
-        reply_markup=InlineKeyboardMarkup(btn),
-        settings=settings
-    )
+    if RICH_MOVIE_RESULTS:
+        rich_cap = format_rich_movie_result(
+            search=search,
+            imdb=imdb,
+            files=files,
+            message=message,
+            chat_id_str=chat_id_str,
+            max_len=1024 if poster else 4096
+        )
+        temp.IMDB_CAP[message.from_user.id] = rich_cap
+        result_msg = await send_rich_search_result(
+            client=client,
+            message=message,
+            reply_msg=reply_msg,
+            text=rich_cap,
+            photo=poster,
+            reply_markup=InlineKeyboardMarkup(btn)
+        )
+    else:
+        result_msg = await send_group_search_result(
+            client=client,
+            message=message,
+            reply_msg=reply_msg,
+            text=cap,
+            photo=poster,
+            reply_markup=InlineKeyboardMarkup(btn),
+            settings=settings
+        )
 
-    if isinstance(result_msg, dict) and "message_id" in result_msg:
-        temp.EPHEMERAL_MSG_IDS[key] = result_msg["message_id"]
+        if isinstance(result_msg, dict) and "message_id" in result_msg:
+            temp.EPHEMERAL_MSG_IDS[key] = result_msg["message_id"]
 
-    if result_msg and hasattr(result_msg, "delete") and settings.get('auto_delete', False):
+    if result_msg and settings.get('auto_delete', False):
         try:
             await asyncio.sleep(300)
-            await result_msg.delete()
-            await message.delete()
+            if hasattr(result_msg, "delete"):
+                await result_msg.delete()
+            if hasattr(message, "delete"):
+                await message.delete()
         except Exception:
             pass
 

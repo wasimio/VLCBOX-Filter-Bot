@@ -182,6 +182,9 @@ RENAME_MODE = bool(environ.get('RENAME_MODE', False)) # Set True or False
 EPHEMERAL_GROUP_MESSAGES = bool(environ.get('EPHEMERAL_GROUP_MESSAGES', False))
 EXPERIMENTAL_BOT_TOKEN = environ.get('EXPERIMENTAL_BOT_TOKEN', '')
 
+# Rich Movie Results (Experimental Feature Flag - Default: False)
+RICH_MOVIE_RESULTS = bool(environ.get('RICH_MOVIE_RESULTS', False))
+
 
 # Auto Approve Info : If True Then Bot Approve New Upcoming Join Request Else Not
 AUTO_APPROVE_MODE = bool(environ.get('AUTO_APPROVE_MODE', False)) # Set True or False
