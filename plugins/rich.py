@@ -3,11 +3,12 @@
 # Ask Doubt on telegram @rickakhtar
 
 """
-Experimental Telegram Rich Message Proof of Concept Plugin for VLCBox.
+Experimental Telegram Rich Message Proof of Concept & Static Prototype Plugin for VLCBox.
 
 Provides:
-- /testrich: Tests genuine Telegram Rich Message sending in private chat and groups.
-- Callback handler for [TEST BUTTON]
+- /testrich: Minimal Rich Message API proof of concept.
+- /richmovie: Static Rich Movie UI Prototype using structured blocks (heading, table, dividers, action buttons).
+- Isolated callback handlers for prototype demonstration buttons.
 """
 
 import logging
@@ -87,9 +88,125 @@ async def test_rich_command(client: MainBot, message: Message):
         )
 
 
+@MainBot.on_message(filters.command("richmovie") & filters.incoming)
+async def rich_movie_prototype_command(client: MainBot, message: Message):
+    """
+    Static Rich Movie UI Prototype command.
+    Sends a structured Rich Message card with sample movie metadata, table, and buttons.
+    Operates in private chat and groups/supergroups as a normal message.
+    """
+    chat_id = message.chat.id
+
+    # Construct static rich movie card blocks
+    blocks = [
+        {
+            "type": "heading",
+            "text": "🎬 SPIDER-MAN: NO WAY HOME"
+        },
+        {
+            "type": "paragraph",
+            "text": "2021 • Action • Adventure • Sci-Fi\n⭐ 8.2/10"
+        },
+        {
+            "type": "divider"
+        },
+        {
+            "type": "heading",
+            "text": "📖 STORYLINE"
+        },
+        {
+            "type": "paragraph",
+            "text": "Peter Parker's identity is revealed, causing his life to become increasingly difficult. He seeks help to restore his secret identity and faces unexpected consequences."
+        },
+        {
+            "type": "divider"
+        },
+        {
+            "type": "heading",
+            "text": "📁 AVAILABLE FILES"
+        },
+        {
+            "type": "table",
+            "headers": ["Quality", "Language", "Size"],
+            "rows": [
+                ["1080p", "Hindi", "3.2 GB"],
+                ["1080p", "English", "3.5 GB"],
+                ["720p", "Hindi", "1.8 GB"],
+                ["720p", "English", "2.0 GB"]
+            ]
+        }
+    ]
+
+    reply_markup = {
+        "inline_keyboard": [
+            [
+                {"text": "🎞 QUALITY", "callback_data": "rich_movie_quality"},
+                {"text": "🌐 LANGUAGE", "callback_data": "rich_movie_language"}
+            ],
+            [
+                {"text": "▶ WATCH", "callback_data": "rich_movie_watch"},
+                {"text": "⬇ DOWNLOAD", "callback_data": "rich_movie_download"}
+            ]
+        ]
+    }
+
+    # Call genuine Telegram Rich Message API directly
+    res = await send_rich_message_api(
+        client=client,
+        chat_id=chat_id,
+        blocks=blocks,
+        reply_markup=reply_markup,
+        reply_to_message_id=message.id
+    )
+
+    if not res.get("success"):
+        error_desc = res.get("description", res.get("error", "Unknown API error"))
+        status_code = res.get("status_code", "Unknown")
+        await message.reply_text(
+            f"⚠️ <b>Static Rich Movie Prototype Result</b>\n\n"
+            f"<b>Status:</b> <code>Rejected / Failed</code>\n"
+            f"<b>HTTP Code:</b> <code>{status_code}</code>\n"
+            f"<b>Telegram API Response:</b> <code>{error_desc}</code>\n\n"
+            f"<i>Note: Rich Messages are currently in experimental testing (RICH_MOVIE_RESULTS={RICH_MOVIE_RESULTS}).</i>",
+            parse_mode=enums.ParseMode.HTML
+        )
+
+
 @MainBot.on_callback_query(filters.regex(r"^rich_test_btn_clicked$"))
 async def rich_test_callback_handler(client: Client, query: CallbackQuery):
     """
     Isolated callback handler for the test Rich Message button.
     """
     await query.answer("✅ Rich Message button works.", show_alert=True)
+
+
+@MainBot.on_callback_query(filters.regex(r"^rich_movie_quality$"))
+async def rich_movie_quality_callback_handler(client: Client, query: CallbackQuery):
+    """
+    Isolated callback handler for the prototype Quality button.
+    """
+    await query.answer("Quality button works.", show_alert=True)
+
+
+@MainBot.on_callback_query(filters.regex(r"^rich_movie_language$"))
+async def rich_movie_language_callback_handler(client: Client, query: CallbackQuery):
+    """
+    Isolated callback handler for the prototype Language button.
+    """
+    await query.answer("Language button works.", show_alert=True)
+
+
+@MainBot.on_callback_query(filters.regex(r"^rich_movie_watch$"))
+async def rich_movie_watch_callback_handler(client: Client, query: CallbackQuery):
+    """
+    Isolated callback handler for the prototype Watch button.
+    """
+    await query.answer("Watch button works.", show_alert=True)
+
+
+@MainBot.on_callback_query(filters.regex(r"^rich_movie_download$"))
+async def rich_movie_download_callback_handler(client: Client, query: CallbackQuery):
+    """
+    Isolated callback handler for the prototype Download button.
+    """
+    await query.answer("Download button works.", show_alert=True)
