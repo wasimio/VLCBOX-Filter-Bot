@@ -39,7 +39,7 @@ async def send_rich_message_api(
     url = f"https://api.telegram.org/bot{token}/sendRichMessage"
     payload: Dict[str, Any] = {
         "chat_id": chat_id,
-        "blocks": blocks
+        "rich_message": {"blocks": blocks}
     }
     if reply_markup:
         payload["reply_markup"] = reply_markup
