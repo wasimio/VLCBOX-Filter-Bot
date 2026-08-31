@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 print(">>> VLCBox: plugins.rich successfully loaded <<<")
 
 
-@MainBot.on_message(filters.command(["richtestping", "richping"]) & filters.incoming)
+@MainBot.on_message(filters.command(["richtestping", "richping"]) & filters.incoming, group=1)
 async def rich_test_ping_command(client, message: Message):
     """
     Diagnostic handler to verify whether the Rich plugin is properly loaded and registered.
@@ -34,7 +34,7 @@ async def rich_test_ping_command(client, message: Message):
     await message.reply_text("RICH PLUGIN LOADED ✅")
 
 
-@MainBot.on_message(filters.command("testrich") & filters.incoming)
+@MainBot.on_message(filters.command("testrich") & filters.incoming, group=1)
 async def test_rich_command(client, message: Message):
     """
     Isolated test command for Telegram Rich Messages.
@@ -112,7 +112,7 @@ async def test_rich_command(client, message: Message):
         )
 
 
-@MainBot.on_message(filters.command("richmovie") & filters.incoming)
+@MainBot.on_message(filters.command("richmovie") & filters.incoming, group=1)
 async def rich_movie_prototype_command(client, message: Message):
     """
     Static Rich Movie UI Prototype command.
