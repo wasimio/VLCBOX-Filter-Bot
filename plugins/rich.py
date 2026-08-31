@@ -67,10 +67,10 @@ async def test_rich_command(client, message: Message):
         },
         {
             "type": "table",
-            "headers": ["Quality", "Size"],
-            "rows": [
-                ["1080p", "3.2 GB"],
-                ["720p", "1.8 GB"]
+            "cells": [
+                [{"text": "Quality", "is_header": True}, {"text": "Size", "is_header": True}],
+                [{"text": "1080p"}, {"text": "3.2 GB"}],
+                [{"text": "720p"}, {"text": "1.8 GB"}]
             ]
         }
     ]
@@ -156,12 +156,12 @@ async def rich_movie_prototype_command(client, message: Message):
         },
         {
             "type": "table",
-            "headers": ["Quality", "Language", "Size"],
-            "rows": [
-                ["1080p", "Hindi", "3.2 GB"],
-                ["1080p", "English", "3.5 GB"],
-                ["720p", "Hindi", "1.8 GB"],
-                ["720p", "English", "2.0 GB"]
+            "cells": [
+                [{"text": "Quality", "is_header": True}, {"text": "Language", "is_header": True}, {"text": "Size", "is_header": True}],
+                [{"text": "1080p"}, {"text": "Hindi"}, {"text": "3.2 GB"}],
+                [{"text": "1080p"}, {"text": "English"}, {"text": "3.5 GB"}],
+                [{"text": "720p"}, {"text": "Hindi"}, {"text": "1.8 GB"}],
+                [{"text": "720p"}, {"text": "English"}, {"text": "2.0 GB"}]
             ]
         }
     ]
