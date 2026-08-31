@@ -57,7 +57,7 @@ async def test_rich_command(client, message: Message):
 
     blocks = [
         {
-            "type": "section_heading",
+            "type": "heading",
             "text": {"type": "plain", "text": "🎬 VLCBox Rich Message Test"},
             "size": 1
         },
@@ -144,7 +144,7 @@ async def rich_movie_prototype_command(client, message: Message):
     blocks = [
         # ── 1. Movie Title ──────────────────────────────────────────────────
         {
-            "type": "section_heading",
+            "type": "heading",
             "text": {"type": "plain", "text": "🎬 SPIDER-MAN: NO WAY HOME"},
             "size": 1
         },
@@ -206,7 +206,7 @@ async def rich_movie_prototype_command(client, message: Message):
 
         # ── 8. Available Files heading ───────────────────────────────────────
         {
-            "type": "section_heading",
+            "type": "heading",
             "text": {"type": "plain", "text": "📁 AVAILABLE FILES"},
             "size": 2
         },
