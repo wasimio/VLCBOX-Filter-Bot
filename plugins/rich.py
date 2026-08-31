@@ -6,11 +6,13 @@
 Experimental Telegram Rich Message Proof of Concept & Static Prototype Plugin for VLCBox.
 
 Provides:
+- /richtestping: Diagnostic ping command to verify plugin loading.
 - /testrich: Minimal Rich Message API proof of concept.
 - /richmovie: Static Rich Movie UI Prototype using structured blocks (heading, table, dividers, action buttons).
 - Isolated callback handlers for prototype demonstration buttons.
 """
 
+import html
 import logging
 from pyrogram import filters, enums, Client
 from pyrogram.types import Message, CallbackQuery
@@ -21,13 +23,24 @@ from info import RICH_MOVIE_RESULTS
 logger = logging.getLogger(__name__)
 
 
-@MainBot.on_message(filters.command("testrich") & filters.incoming)
+@MainBot.on_message(filters.command(["richtestping", "richping"]))
+async def rich_test_ping_command(client: MainBot, message: Message):
+    """
+    Diagnostic handler to verify whether the Rich plugin is properly loaded and registered.
+    Does NOT call Telegram's Rich Message API.
+    """
+    logger.info(f"RICH_DIAGNOSTIC: /richtestping received from user_id={message.from_user.id if message.from_user else 0} in chat_id={message.chat.id}")
+    await message.reply_text("RICH PLUGIN LOADED ✅")
+
+
+@MainBot.on_message(filters.command("testrich"))
 async def test_rich_command(client: MainBot, message: Message):
     """
     Isolated test command for Telegram Rich Messages.
     Works in both private chat and groups/supergroups.
     """
     chat_id = message.chat.id
+    logger.info(f"RICH_TEST: /testrich received in chat_id={chat_id}")
     
     # Construct minimal rich blocks according to specification
     blocks = [
@@ -66,29 +79,39 @@ async def test_rich_command(client: MainBot, message: Message):
         ]
     }
 
-    # Call genuine Telegram Rich Message API directly
-    res = await send_rich_message_api(
-        client=client,
-        chat_id=chat_id,
-        blocks=blocks,
-        reply_markup=reply_markup,
-        reply_to_message_id=message.id
-    )
+    try:
+        # Call genuine Telegram Rich Message API directly
+        res = await send_rich_message_api(
+            client=client,
+            chat_id=chat_id,
+            blocks=blocks,
+            reply_markup=reply_markup,
+            reply_to_message_id=message.id
+        )
 
-    if not res.get("success"):
-        error_desc = res.get("description", res.get("error", "Unknown API error"))
-        status_code = res.get("status_code", "Unknown")
+        if not res.get("success"):
+            error_desc = res.get("description", res.get("error", "Unknown API error"))
+            status_code = res.get("status_code", "Unknown")
+            logger.warning(f"RICH_TEST: sendRichMessage returned failure: {status_code} - {error_desc}")
+            await message.reply_text(
+                f"⚠️ <b>Telegram Rich Message API Test Result</b>\n\n"
+                f"<b>Status:</b> <code>Rejected / Failed</code>\n"
+                f"<b>HTTP Code:</b> <code>{status_code}</code>\n"
+                f"<b>Telegram API Response:</b> <code>{error_desc}</code>\n\n"
+                f"<i>Note: Rich Messages are currently in experimental testing (RICH_MOVIE_RESULTS={RICH_MOVIE_RESULTS}).</i>",
+                parse_mode=enums.ParseMode.HTML
+            )
+        else:
+            logger.info(f"RICH_TEST: sendRichMessage succeeded for chat_id={chat_id}")
+    except Exception as e:
+        logger.error(f"RICH_TEST: Exception executing /testrich: {e}", exc_info=True)
         await message.reply_text(
-            f"⚠️ <b>Telegram Rich Message API Test Result</b>\n\n"
-            f"<b>Status:</b> <code>Rejected / Failed</code>\n"
-            f"<b>HTTP Code:</b> <code>{status_code}</code>\n"
-            f"<b>Telegram API Response:</b> <code>{error_desc}</code>\n\n"
-            f"<i>Note: Rich Messages are currently in experimental testing (RICH_MOVIE_RESULTS={RICH_MOVIE_RESULTS}).</i>",
+            f"❌ <b>Rich Handler Exception:</b> <code>{html.escape(str(e))}</code>",
             parse_mode=enums.ParseMode.HTML
         )
 
 
-@MainBot.on_message(filters.command("richmovie") & filters.incoming)
+@MainBot.on_message(filters.command("richmovie"))
 async def rich_movie_prototype_command(client: MainBot, message: Message):
     """
     Static Rich Movie UI Prototype command.
@@ -96,6 +119,7 @@ async def rich_movie_prototype_command(client: MainBot, message: Message):
     Operates in private chat and groups/supergroups as a normal message.
     """
     chat_id = message.chat.id
+    logger.info(f"RICH_MOVIE: /richmovie received in chat_id={chat_id}")
 
     # Construct static rich movie card blocks
     blocks = [
@@ -150,24 +174,34 @@ async def rich_movie_prototype_command(client: MainBot, message: Message):
         ]
     }
 
-    # Call genuine Telegram Rich Message API directly
-    res = await send_rich_message_api(
-        client=client,
-        chat_id=chat_id,
-        blocks=blocks,
-        reply_markup=reply_markup,
-        reply_to_message_id=message.id
-    )
+    try:
+        # Call genuine Telegram Rich Message API directly
+        res = await send_rich_message_api(
+            client=client,
+            chat_id=chat_id,
+            blocks=blocks,
+            reply_markup=reply_markup,
+            reply_to_message_id=message.id
+        )
 
-    if not res.get("success"):
-        error_desc = res.get("description", res.get("error", "Unknown API error"))
-        status_code = res.get("status_code", "Unknown")
+        if not res.get("success"):
+            error_desc = res.get("description", res.get("error", "Unknown API error"))
+            status_code = res.get("status_code", "Unknown")
+            logger.warning(f"RICH_MOVIE: sendRichMessage returned failure: {status_code} - {error_desc}")
+            await message.reply_text(
+                f"⚠️ <b>Static Rich Movie Prototype Result</b>\n\n"
+                f"<b>Status:</b> <code>Rejected / Failed</code>\n"
+                f"<b>HTTP Code:</b> <code>{status_code}</code>\n"
+                f"<b>Telegram API Response:</b> <code>{error_desc}</code>\n\n"
+                f"<i>Note: Rich Messages are currently in experimental testing (RICH_MOVIE_RESULTS={RICH_MOVIE_RESULTS}).</i>",
+                parse_mode=enums.ParseMode.HTML
+            )
+        else:
+            logger.info(f"RICH_MOVIE: sendRichMessage succeeded for chat_id={chat_id}")
+    except Exception as e:
+        logger.error(f"RICH_MOVIE: Exception executing /richmovie: {e}", exc_info=True)
         await message.reply_text(
-            f"⚠️ <b>Static Rich Movie Prototype Result</b>\n\n"
-            f"<b>Status:</b> <code>Rejected / Failed</code>\n"
-            f"<b>HTTP Code:</b> <code>{status_code}</code>\n"
-            f"<b>Telegram API Response:</b> <code>{error_desc}</code>\n\n"
-            f"<i>Note: Rich Messages are currently in experimental testing (RICH_MOVIE_RESULTS={RICH_MOVIE_RESULTS}).</i>",
+            f"❌ <b>Rich Movie Handler Exception:</b> <code>{html.escape(str(e))}</code>",
             parse_mode=enums.ParseMode.HTML
         )
 
