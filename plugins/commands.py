@@ -678,6 +678,15 @@ async def debug_review_command(client, message):
         tb = traceback.format_exc()
         await message.reply_text(f"❌ Failed to import `plugins.review`!\n\n**Error:** `{e}`\n\n**Traceback:**\n`{tb[-1000:]}`")
 
+@MainBot.on_message(filters.command("debug_rich"))
+async def debug_rich_command(client, message):
+    try:
+        importlib.import_module("plugins.rich")
+        await message.reply_text("✅ Successfully imported `plugins.rich`!")
+    except Exception as e:
+        tb = traceback.format_exc()
+        await message.reply_text(f"❌ Failed to import `plugins.rich`!\n\n**Error:** `{e}`\n\n**Traceback:**\n`{tb[-1000:]}`")
+
 @MainBot.on_message(filters.command("testreviewping"))
 async def cmd_test_review_ping(client, message):
     await message.reply_text("✅ <b>Test ReviewPing from commands.py works!</b>", parse_mode=enums.ParseMode.HTML)

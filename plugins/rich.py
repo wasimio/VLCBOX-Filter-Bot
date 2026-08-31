@@ -21,20 +21,21 @@ from VLCBox.util.rich import send_rich_message_api
 from info import RICH_MOVIE_RESULTS
 
 logger = logging.getLogger(__name__)
+print(">>> VLCBox: plugins.rich successfully loaded <<<")
 
 
-@MainBot.on_message(filters.command(["richtestping", "richping"]))
-async def rich_test_ping_command(client: MainBot, message: Message):
+@MainBot.on_message(filters.command(["richtestping", "richping"]) & filters.incoming)
+async def rich_test_ping_command(client, message: Message):
     """
     Diagnostic handler to verify whether the Rich plugin is properly loaded and registered.
     Does NOT call Telegram's Rich Message API.
     """
-    logger.info(f"RICH_DIAGNOSTIC: /richtestping received from user_id={message.from_user.id if message.from_user else 0} in chat_id={message.chat.id}")
+    logger.info(f"RICH_DIAGNOSTIC: /richtestping received in chat_id={message.chat.id}")
     await message.reply_text("RICH PLUGIN LOADED ✅")
 
 
-@MainBot.on_message(filters.command("testrich"))
-async def test_rich_command(client: MainBot, message: Message):
+@MainBot.on_message(filters.command("testrich") & filters.incoming)
+async def test_rich_command(client, message: Message):
     """
     Isolated test command for Telegram Rich Messages.
     Works in both private chat and groups/supergroups.
@@ -111,8 +112,8 @@ async def test_rich_command(client: MainBot, message: Message):
         )
 
 
-@MainBot.on_message(filters.command("richmovie"))
-async def rich_movie_prototype_command(client: MainBot, message: Message):
+@MainBot.on_message(filters.command("richmovie") & filters.incoming)
+async def rich_movie_prototype_command(client, message: Message):
     """
     Static Rich Movie UI Prototype command.
     Sends a structured Rich Message card with sample movie metadata, table, and buttons.
